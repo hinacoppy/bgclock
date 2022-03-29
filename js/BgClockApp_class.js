@@ -5,7 +5,6 @@ class BgClockApp {
   constructor(clockmode = true) {
     this.clockmode = clockmode;
     this.flipcard = new FlipCard();
-    this.clockobj = new BgClock(this, clockmode); //clockmode = digital(T)/analog(F)
     this.setDomNames();
     this.setEventHandler();
     this.themecolor = this.setThemeColor("cool");
@@ -30,6 +29,9 @@ class BgClockApp {
     this.settingwindow = $("#settingwindow");
     this.clockarea = this.clockmode ? $("#clock1, #clock2") : $("#clock1cv, #clock2cv");
     this.pauseinfo = $("#pauseinfo")
+    this.matchlen = $("#matchlength");
+    this.selminpoint = $("#allotedtimemin");
+    this.seldelay = $("#delaytime");
   }
 
   //イベントハンドラの定義
@@ -88,24 +90,36 @@ class BgClockApp {
 
   //タイマ部分クリック時の処理
   tapTimerAction(idname) {
-    if (this.timeoutflg) { return; } //タイマ切れ状態 or 設定画面のときは何もしない
+    if (this.timeoutflg) { return; } //タイマ切れ状態のときは何もしない
     const tappos = Number(idname.slice(-1));
-    if (this.turn != tappos && this.pauseflg == false) { return; } //相手側(グレーアウト側)をクリックしたときは何もしない
-    this.turn = BgUtil.getBdOppo(tappos);
-    this.clockobj.tapTimer(this.turn);
+    if (this.clockplayer != tappos && this.pauseflg == false) { return; } //相手側(グレーアウト側)をクリックしたときは何もしない
+    this.clockplayer = BgUtil.getBdOppo(tappos); //タップの反対側のクロックを動かす
+    const player = this.clockplayer;
+    const oppo = BgUtil.getBdOppo(this.clockplayer);
+
+    this.delay = this.delayInit; //保障時間を設定
+    this.stopTimer(); //相手方のクロックをストップし
+    this.startTimer(); //自分方のクロックをスタートさせる
+
+    this.dispDelay(player, this.delay);
+    if (this.clockmode) {
+      $("#delay" + player).show();
+      $("#delay" + oppo).hide();
+    }
+
     this.pause_out();
     this.sound_vibration("tap");
   }
 
   //PAUSEボタン押下時の処理
   pauseAction() {
-    if (this.turn == 0 || this.timeoutflg) { return; } //どちらの手番でもない or タイマ切れのときは何もしない
+    if (this.clockplayer == 0 || this.timeoutflg) { return; } //どちらの手番でもない or タイマ切れのときは何もしない
     if (this.pauseflg) { //PAUSE -> PLAY
       this.pause_out();
-      this.clockobj.startTimer(); //現在の持ち時間からクロック再開
+      this.startTimer(); //現在の持ち時間からクロック再開
     } else { //PLAY -> PAUSE
       this.pause_in();
-      this.clockobj.stopTimer(true);
+      this.stopTimer();
     }
     this.sound_vibration("pause");
   }
@@ -116,16 +130,27 @@ class BgClockApp {
     this.vibrationflg = $("[name=vibration]").prop("checked");
     this.hourhandflg = $("[name=hourhand]").prop("checked");
     this.pauseflg = true; //pause状態で起動する
-    this.turn = 0; //手番をリセット
+    this.clockplayer = 0; //手番をリセット
     this.timeoutflg = false;
     this.flipcard.resetScore();
-    this.clockobj.setClockOption();
+    this.setClockOption();
     if (this.clockmode) {
       $(".delay").hide();
       $(".clock").removeClass("timeupLose");
     } else {
       this.pauseinfo.text("PAUSE").removeClass("timeupLose");
     }
+  }
+
+  setClockOption() {
+    const time = 60 * this.get_allowtimemin(); //設定時間 = ポイント数 x 時間(分)
+    this.clock = [0, time, time];
+    this.delayInit = parseInt(this.seldelay.val());
+
+    this.dispTimer(1, time, "pause");
+    this.dispTimer(2, time, "pause");
+    this.dispDelay(1, this.delayInit);
+    this.dispDelay(2, this.delayInit);
   }
 
   //PLAY -> PAUSE
@@ -138,8 +163,8 @@ class BgClockApp {
       this.clockarea.removeClass("teban noteban").addClass("teban_pause"); //クロックを無手番に
     } else {
       this.pauseinfo.text("PAUSE");
-      this.draw_timerframe(1, this.clockobj.clock[1], "pause"); //クロックをPAUSE状態で表示
-      this.draw_timerframe(2, this.clockobj.clock[2], "pause");
+      this.draw_timerframe(1, this.clock[1], "pause"); //クロックをPAUSE状態で表示
+      this.draw_timerframe(2, this.clock[2], "pause");
       $("#clock1, #clock2").removeClass("teban noteban").addClass("teban_pause");
     }
   }
@@ -149,18 +174,46 @@ class BgClockApp {
     this.pauseflg = false;
     this.pauseinfo.hide();
     this.settingbtn.addClass("btndisable"); //ボタンクリックを無効化
-    const player = this.turn;
+    const player = this.clockplayer;
     const oppo = BgUtil.getBdOppo(player); //手番じゃないほう
     $("#clock" + player).removeClass("noteban teban_pause").addClass("teban");
     $("#clock" + oppo).removeClass("teban teban_pause").addClass("noteban");
     if (!this.clockmode) {
-      this.draw_timerframe(player, this.clockobj.clock[player], "teban");
-      this.draw_timerframe(oppo, this.clockobj.clock[oppo], "noteban");
+      this.draw_timerframe(player, this.clock[player], "teban");
+      this.draw_timerframe(oppo, this.clock[oppo], "noteban");
+    }
+  }
+
+  startTimer() {
+    const clockspd = 1000;
+    this.clockobj = setInterval(() => this.countdownClock(this.clockplayer, clockspd), clockspd);
+    //アロー関数で呼び出すことで、コールバック関数内でthisが使える
+  }
+
+  stopTimer() {
+    clearInterval(this.clockobj);
+  }
+
+  //クロックをカウントダウン
+  countdownClock(player, clockspd) {
+    if (this.delay > 0) {
+      //保障時間内
+      this.delay -= clockspd / 1000;
+      this.dispDelay(player, this.delay);
+    } else {
+      //保障時間切れ後
+      $("#delay" + player).hide();
+      this.clock[player] -= clockspd / 1000;
+      this.dispTimer(player, this.clock[player], "teban");
+      if (this.clock[player] <= 0) {
+        this.timeupLose(player); //切れ負け処理
+      }
     }
   }
 
   //切れ負け処理
   timeupLose(turn) {
+    this.stopTimer();
     this.timeoutflg = true;
     this.pause_in(); //ポーズ状態に遷移
     if (this.clockmode) {
@@ -169,6 +222,34 @@ class BgClockApp {
       this.pauseinfo.text("TIMEUP LOSE").addClass("timeupLose");
     }
     this.sound_vibration("buzzer");
+  }
+
+  dispDelay(player, delay) {
+    if (this.clockmode) {
+      $("#delay" + player).text(Math.trunc(delay));
+    } else {
+      this.draw_delayframe(this.delayInit, delay);
+    }
+  }
+
+  dispTimer(player, time, stat) {
+    if (this.clockmode) {
+      if (time < 0) { time = 0; }
+      const min = Math.trunc(time / 60);
+      const sec = Math.trunc(time % 60);
+      const timestr = ("00" + min).slice(-2) + ":" + ("00" + sec).slice(-2);
+      $("#clock" + player).text(timestr);
+    } else {
+      this.draw_timerframe(player, time, stat);
+    }
+  }
+
+  get_allowtimemin() {
+    const matchlength = parseInt(this.matchlen.val());
+    const selminpoint = parseFloat(this.selminpoint.val());
+    const maxmin = this.clockmode ? 100 : 720; //analogの最大値は720分(12時間)
+    const time = (matchlength == 0) ? maxmin : Math.ceil(matchlength * selminpoint);
+    return time;
   }
 
   //音とバイブレーション
@@ -377,14 +458,6 @@ class BgClockApp {
     ctx.stroke();
   }
 
-  get_allowtimemin() {
-    const matchlength = parseInt($("#matchlength").val());
-    const selminpoint = parseFloat($("#allotedtimemin").val());
-    const maxmin = this.clockmode ? 100 : 720; //analogの最大値は720分(12時間)
-    const time = (matchlength == 0) ? maxmin : Math.ceil(matchlength * selminpoint);
-    return time;
-  }
-
   saveSettingVars() {
     this.settingVars.matchlength    = $("#matchlength").val();
     this.settingVars.allotedtimemin = $("#allotedtimemin").val();
@@ -411,9 +484,9 @@ class BgClockApp {
 
     this.themecolor = this.setThemeColor(theme);
     //テーマに合わせてcanvasオブジェクトを再描画
-    this.draw_timerframe(1, this.clockobj.clock[1], "pause");
-    this.draw_timerframe(2, this.clockobj.clock[2], "pause");
-    this.draw_delayframe(this.clockobj.delayInit, this.clockobj.delay);
+    this.draw_timerframe(1, this.clock[1], "pause");
+    this.draw_timerframe(2, this.clock[2], "pause");
+    this.draw_delayframe(this.delayInit, this.delay);
   }
 
   setThemeColor(theme) {
