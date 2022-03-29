@@ -1,0 +1,423 @@
+/* document outline ----------------------------------------- */
+*{
+  user-select:none; /* タップ、ドラッグで文字選択しないように */
+}
+html{
+  height:100%;
+  overflow:hidden;
+  overscroll-behavior:none; /* バウンススクロールを抑止(only for Android) */
+}
+body{
+  margin:0;
+  padding:0;
+  min-height:100%;
+  height:100%;
+  font-family:'Arial', 'Meiryo UI';
+  background-color:var(--body-bg-color);
+}
+@font-face{
+  /* https://www.keshikan.net/fonts.html */
+  font-family:'DSEG7-Classic';
+  src:url(../webfonts/DSEG7Classic-BoldItalic.woff);
+}
+a{
+  color:inherit;
+  text-decoration:none;
+}
+button{
+  padding:0;
+}
+/* Grid Layout settings ------------------------------------- */
+/* 以下すべて相対サイズにし、レスポンシブ対応可能にしておく */
+#mainwindow{
+  display:grid; /* Grid Layout でコンテンツを配置 */
+  grid-template-columns:50vw 50vw;
+  grid-template-rows:30vh 58vh 9vh; /* ボタン下に隙間を空けるため、敢えて100vhにしない */
+  grid-template-areas:
+     'score1 score2'
+     'clock1 clock2'
+     'pausebtn settingbtn';
+  align-items:center; /* 子アイテムはデフォで上下左右に中央揃え */
+  justify-items:center;
+  padding-top:1vh;
+}
+#score1{
+  grid-area:score1;
+  align-self:start; /* 上揃え */
+}
+#score2{
+  grid-area:score2;
+  align-self:start; /* 上揃え */
+}
+#matchinfo{
+  grid-area:1/1/2/3;
+  align-self:start; /* 上揃え */
+}
+#crawfordinfo{
+  grid-area:1/1/2/3;
+  align-self:start; /* 上揃え */
+  padding-top:15vh; /* matchinfoを避けて表示 */
+}
+#clock1{
+  grid-area:clock1;
+}
+.digital #clock1{
+  justify-self:left; /* 左寄せ */
+}
+#clock2{
+  grid-area:clock2;
+}
+.digital #clock2{
+  justify-self:right; /* 右寄せ */
+}
+#delay{
+  grid-area:2/1/3/3;
+  align-self:start; /* 上寄せ */
+  z-index:3;
+}
+#delay1{
+  grid-area:clock1;
+}
+#delay2{
+  grid-area:clock2;
+}
+#pauseinfo{
+  grid-area:2/1/3/3; /* クロックの中央に配置 */
+}
+.digital #pausebtn{
+  grid-area:pausebtn;
+}
+.analog #pausebtn{
+  grid-area:3/1/4/3;
+  z-index:3;
+}
+#settingbtn{
+  grid-area:settingbtn;
+}
+.analog #settingbtn{
+  justify-self:right;
+  margin-right:2vw;
+}
+/* object decorations ------------------------------------- */
+.digital .clock{
+  font-family:'DSEG7-Classic', 'Arial Black', 'Meiryo UI';
+  margin:2vh 1vw;
+  padding:5vh 0;
+}
+.analog .clock{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100%;
+}
+.digital .delay{
+  font-size:10vw;
+  background-color:rgba( 192, 192, 192, 0.7 );
+  width:15vw;
+  text-align:center;
+  z-index:7;
+  pointer-events:none; /* タップイベントを無効化(下に透過) */
+}
+.analog .delay{
+  width:20vh; /* 正円で表示 */
+  height:20vh;
+}
+.oparationbtn{
+  padding:2vh 6vw;
+  border:4px solid;
+  border-radius:4vw;
+  margin-top:1vh;
+  display:inline-block;
+  font-size:2vw;
+}
+.btnenable{
+  background-color:var(--btn-enable);
+  border-color:var(--btn-frame-enable);
+  color:var(--btn-frame-enable);
+}
+.btndisable{
+  background-color:var(--btn-disable);
+  border-color:var(--btn-frame-disable);
+  color:var(--btn-frame-disable);
+}
+.pauseinfo{
+  font-size:8vw;
+  z-index:10;
+  padding:1vh 2vw;
+  border:5px solid;
+  border-radius:3vw;
+  background-color:var(--pause-bg-color);
+  background-color:rgba( 128, 128, 128, 0.70 );
+  color:var(--pause-fg-color);
+}
+.teban{
+  z-index:5;
+}
+.digital .teban{
+  font-size:18vw;
+  background-color:var(--clock-fg-color);
+}
+.noteban{
+}
+.digital .noteban{
+  font-size:10vw;
+  background-color:var(--clock-bg-color);
+}
+.teban_pause{
+}
+.digital .teban_pause{
+  font-size:14vw;
+  background-color:var(--clock-bg-color);
+}
+.timeupLose{
+  color:var(--lose-info-color);
+}
+/* toggle switch ----------------------------------------- */
+/* (参考) https://www.w3schools.com/howto/howto_css_switch.asp */
+.switch{
+  position:relative;
+  display:inline-block;
+  width:4em;
+  height:2em;
+  background-color:var(--slider-bg);
+}
+.switch input{
+  display:none;
+}
+.slider{
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  transition:.3s;
+  border-radius:1.6em; /* Rounded sliders */
+  background-color:var(--slider-fg);
+}
+.slider:before{
+  position:absolute;
+  content:"";
+  height:1.6em;
+  width:1.6em;
+  left:0.2em;
+  bottom:0.2em;
+  transition:.3s;
+  border-radius:50%;
+  background-color:var(--slider-btn);
+}
+input:checked + .slider{
+  background-color:var(--slider-checked);
+}
+input:checked + .slider:before{
+  transform:translateX(2.0em);
+}
+/* Segmented Control ----------------------------------------- */
+/* (参考) https://ginpen.com/2012/12/11/segmented-control/ */
+.segmented{
+  display:inline-block;
+}
+.segmented .label{
+  border:1px solid;
+  float:left;
+  padding:0.5em 1em;
+  text-align:center;
+  width:12vw;
+  background-color:var(--segmented-disable-bg);
+  border-color:var(--segmented-frame);
+  color:var(--segmented-disable-fg);
+}
+.segmented input{
+  display:none;
+}
+.segmented input:checked + .label{
+  background-color:var(--segmented-enable-bg);
+  color:var(--segmented-enable-fg);
+}
+/* Theme Color Definition ------------------------------------- */
+.cool{
+  --body-bg-color:       #efe;
+  --clock-fg-color:      #ffa;
+  --clock-bg-color:      #999;
+  --score-bg-color:      #ddf;
+  --match-bg-color:      #dfa;
+  --btn-enable:          #adf;
+  --btn-frame-enable:    #29f;
+  --btn-disable:         #ddd;
+  --btn-frame-disable:   #aaa;
+  --pause-bg-color:      #dfd;
+  --pause-fg-color:      #0ff;
+  --lose-info-color:     #f00;
+  --setting-bg-color:    #dff;
+  --setting-frame:       #00f;
+  --setting-title:       #adf;
+  --slider-bg:           #dff;
+  --slider-fg:           #999;
+  --slider-checked:      #29f;
+  --slider-btn:          #fff;
+  --segmented-disable-bg:#eee;
+  --segmented-frame:     #ccc;
+  --segmented-disable-fg:#666;
+  --segmented-enable-bg: #29f;
+  --segmented-enable-fg: #fff;
+}
+.warm{
+  --body-bg-color:       #fee;
+  --clock-fg-color:      #ffa;
+  --clock-bg-color:      #c95;
+  --score-bg-color:      #fbb;
+  --match-bg-color:      #ffb;
+  --btn-enable:          #dc9;
+  --btn-frame-enable:    #932;
+  --btn-disable:         #ddd;
+  --btn-frame-disable:   #aaa;
+  --pause-bg-color:      #fdd;
+  --pause-fg-color:      #ff0;
+  --lose-info-color:     #f00;
+  --setting-bg-color:    #ffd;
+  --setting-frame:       #f22;
+  --setting-title:       #dc9;
+  --slider-bg:           #ffd;
+  --slider-fg:           #bbb;
+  --slider-checked:      #932;
+  --slider-btn:          #fff;
+  --segmented-disable-bg:#eee;
+  --segmented-frame:     #ccc;
+  --segmented-disable-fg:#666;
+  --segmented-enable-bg: #932;
+  --segmented-enable-fg: #fff;
+}
+.mono{
+  --body-bg-color:       #eee;
+  --clock-fg-color:      #fff;
+  --clock-bg-color:      #ccc;
+  --score-bg-color:      #ccc;
+  --match-bg-color:      #bbb;
+  --btn-enable:          #bbb;
+  --btn-frame-enable:    #444;
+  --btn-disable:         #ddd;
+  --btn-frame-disable:   #aaa;
+  --pause-bg-color:      #ddd;
+  --pause-fg-color:      #fff;
+  --lose-info-color:     #f00;
+  --setting-bg-color:    #ddd;
+  --setting-frame:       #444;
+  --setting-title:       #bbb;
+  --slider-bg:           #ddd;
+  --slider-fg:           #bbb;
+  --slider-checked:      #444;
+  --slider-btn:          #fff;
+  --segmented-disable-bg:#eee;
+  --segmented-frame:     #ccc;
+  --segmented-disable-fg:#666;
+  --segmented-enable-bg: #444;
+  --segmented-enable-fg: #fff;
+}
+/* Flip Card styles ------------------------------------- */
+.cardcontainer{
+  position:relative;
+  width:18vw;
+  height:28vh;
+  border-radius:20px;
+}
+.card{
+  position:absolute;
+  top:0;
+  left:0;
+  width:18vw;
+  height:28vh;
+  line-height:28vh;
+  border-radius:20px;
+  text-align:center;
+  font-size:10vw;
+  transform-style:preserve-3d;
+  background-color:var(--score-bg-color);
+}
+.curr{
+  transform:perspective(1500px) rotateX(0deg);
+}
+.next{
+  transform:perspective(1500px) rotateX(90deg);
+  display:none;
+}
+.prev{
+  transform:perspective(1500px) rotateX(-90deg);
+}
+.flipup90{
+  transform:perspective(1500px) rotateX(-90deg);
+  transition:ease-out 0.3s transform;
+}
+.flipdn90{
+  transform:perspective(1500px) rotateX(90deg);
+  transition:ease-out 0.3s transform;
+}
+.flipdn0{
+  transform:perspective(1500px) rotateX(0deg);
+  transition:ease-out 0.3s transform;
+}
+.flipup0{
+  transform:perspective(1500px) rotateX(0deg);
+  transition:ease-out 0.3s transform;
+}
+/* settingwindow decorations ------------------------------------- */
+.mainwin{
+  transform-style:preserve-3d;
+  transform:perspective(1500px) rotateY(0deg);
+  transition:ease-out 0.3s transform;
+}
+.setting{
+  transform-style:preserve-3d;
+  transform:perspective(1500px) rotateY(90deg);
+  transition:ease-out 0.3s transform;
+  display:none;
+}
+.fliphoriz90{
+  transform:perspective(1500px) rotateY(-90deg);
+  transition:ease-out 0.3s transform;
+}
+.fliphoriz0{
+  transform:perspective(1500px) rotateY(0deg);
+  transition:ease-out 0.3s transform;
+}
+/* settingwindow decorations ------------------------------------- */
+#settingwindow{
+  position:absolute;
+  display:none;
+  z-index:9;
+  background-color:var(--setting-bg-color);
+  border:3px solid var(--setting-frame);
+  font-size:2vw;
+  padding:5vh 5vw;
+}
+.settingtitle{
+  font-size:2.2vw;
+  padding:2vh 2vw;
+  margin-bottom:2vh;
+  color:var(--segmented-enable-fg);
+  background-color:var(--segmented-enable-bg);
+}
+#settingwindow select{
+  font-size:100%;
+  padding:0 0.3vw;
+  margin:0 1vw;
+  text-align:center;
+  /*appearance:none; /* 選択の下三角を表示しない */
+}
+#settingwindow tr{
+  height:8vh;
+  line-height:8vh;
+}
+/* Contents decorations ------------------------------------- */
+#matchinfo{
+  width:10vw;
+  height:15vh;
+  line-height:15vh;
+  text-align:center;
+  font-size:5vw;
+  border-radius:20px;
+  background-color:var(--match-bg-color);
+}
+#crawfordinfo{
+  font-size:3vw;
+  text-align:center;
+}
