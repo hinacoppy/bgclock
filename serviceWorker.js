@@ -21,7 +21,6 @@ const STATIC_FILES = [
   ORIGIN + '/bgclock/icon/analog/android-chrome-192x192.png',
   ORIGIN + '/bgclock/icon/analog/android-chrome-512x512.png',
   ORIGIN + '/bgclock/css/bgclock.css',
-  ORIGIN + '/bgclock/js/BgClock_class.js',
   ORIGIN + '/bgclock/js/BgClockApp_class.js',
   ORIGIN + '/bgclock/sounds/decision1.mp3',
   ORIGIN + '/bgclock/sounds/decision7.mp3',
