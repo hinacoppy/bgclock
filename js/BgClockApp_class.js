@@ -3,7 +3,7 @@
 
 class BgClockApp {
   constructor(clockmode = true) {
-    this.clockmode = clockmode;
+    this.clockmode = clockmode;　//digital(T)/analog(F)
     this.flipcard = new FlipCard();
     this.setDomNames();
     this.setEventHandler();
@@ -89,10 +89,12 @@ class BgClockApp {
   }
 
   //タイマ部分クリック時の処理
-  tapTimerAction(idname) {
+  tapTimerAction(targetid) {
     if (this.timeoutflg) { return; } //タイマ切れ状態のときは何もしない
-    const tappos = Number(idname.slice(-1));
-    if (this.clockplayer != tappos && this.pauseflg == false) { return; } //相手側(グレーアウト側)をクリックしたときは何もしない
+    const tappos = Number(targetid.slice(-1));
+    if (!this.pauseflg && this.clockplayer != tappos) { return; }
+    //ポーズ時じゃないときに、相手側(グレーアウト側)をクリックしたときは何もしない
+
     this.clockplayer = BgUtil.getBdOppo(tappos); //タップの反対側のクロックを動かす
     const player = this.clockplayer;
     const oppo = BgUtil.getBdOppo(this.clockplayer);
@@ -143,14 +145,15 @@ class BgClockApp {
   }
 
   setClockOption() {
-    const time = 60 * this.get_allowtimemin(); //設定時間 = ポイント数 x 時間(分)
+    const time = 60 * this.get_allowtimemin(); //設定時間 = ポイント数 x 時間(分) x 60(秒)
     this.clock = [0, time, time];
     this.delayInit = parseInt(this.seldelay.val());
 
     this.dispTimer(1, time, "pause");
     this.dispTimer(2, time, "pause");
-    this.dispDelay(1, this.delayInit);
-    this.dispDelay(2, this.delayInit);
+    if (!this.clockmode) {
+      this.dispDelay(null, this.delayInit);
+    }
   }
 
   //PLAY -> PAUSE
@@ -212,12 +215,12 @@ class BgClockApp {
   }
 
   //切れ負け処理
-  timeupLose(turn) {
+  timeupLose(player) {
     this.stopTimer();
     this.timeoutflg = true;
     this.pause_in(); //ポーズ状態に遷移
     if (this.clockmode) {
-      $("#clock" + turn).text("LOSE").addClass("timeupLose");
+      $("#clock" + player).text("LOSE").addClass("timeupLose");
     } else {
       this.pauseinfo.text("TIMEUP LOSE").addClass("timeupLose");
     }
