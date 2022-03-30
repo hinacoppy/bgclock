@@ -2,7 +2,6 @@
   "name": "BgClockAnalog",
   "short_name": "bgclock-analog",
   "start_url": "/bgclock/analog.html",
-  "scope": "/bgclock/",
   "display": "fullscreen",
   "background_color": "#efe",
   "theme_color": "#efe",
