@@ -2,6 +2,7 @@
   "name": "BgClockDigital",
   "short_name": "bgclock-digital",
   "start_url": "/bgclock/digital.html",
+  "scope": "/bgclock/digital.html",
   "display": "fullscreen",
   "background_color": "#efe",
   "theme_color": "#efe",
