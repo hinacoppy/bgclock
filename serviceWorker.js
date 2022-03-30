@@ -1,7 +1,7 @@
 /* serviceWorker.js */
 'use strict';
 
-const CACHE_NAME = "bgclock-v20220329";
+const CACHE_NAME = "bgclock-v20220330";
 const ORIGIN = (location.hostname == 'localhost') ? '' : location.protocol + '//' + location.hostname;
 
 const STATIC_FILES = [
@@ -9,7 +9,8 @@ const STATIC_FILES = [
   ORIGIN + '/bgclock/index.html',
   ORIGIN + '/bgclock/digital.html',
   ORIGIN + '/bgclock/analog.html',
-  ORIGIN + '/bgclock/manifest.json',
+  ORIGIN + '/bgclock/manifest-digital.json',
+  ORIGIN + '/bgclock/manifest-analog.json',
   ORIGIN + '/bgclock/icon/digital/favicon.ico',
   ORIGIN + '/bgclock/icon/digital/apple-touch-icon.png',
   ORIGIN + '/bgclock/icon/digital/android-chrome-96x96.png',
