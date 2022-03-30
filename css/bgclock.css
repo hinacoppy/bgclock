@@ -320,12 +320,9 @@ input:checked + .slider:before{
   position:relative;
   width:18vw;
   height:28vh;
-  border-radius:20px;
 }
 .card{
   position:absolute;
-  top:0;
-  left:0;
   width:18vw;
   height:28vh;
   line-height:28vh;
