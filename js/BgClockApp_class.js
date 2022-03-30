@@ -1,5 +1,5 @@
 // Backgammon Clock and Score board App 用 JavaScript
-'use strict';
+"use strict";
 
 class BgClockApp {
   constructor(clockmode = true) {
@@ -29,9 +29,10 @@ class BgClockApp {
     this.settingwindow = $("#settingwindow");
     this.clockarea = this.clockmode ? $("#clock1, #clock2") : $("#clock1cv, #clock2cv");
     this.pauseinfo = $("#pauseinfo")
-    this.matchlen = $("#matchlength");
-    this.selminpoint = $("#allotedtimemin");
+    this.matchlength = $("#matchlength");
+    this.selminpoint = $("#selminpoint");
     this.seldelay = $("#delaytime");
+    this.theme = $("#theme");
   }
 
   //イベントハンドラの定義
@@ -58,7 +59,7 @@ class BgClockApp {
     });
 
     //メイン画面の[PAUSE] ボタンがクリックされたとき
-    this.pausebtn.on('click', () => {
+    this.pausebtn.on("click", () => {
       this.pauseAction();
     });
 
@@ -69,22 +70,25 @@ class BgClockApp {
     });
 
     //クロックの場所がクリック(タップ)されたとき
-    this.clockarea.on('touchstart mousedown', (e) => {
+    this.clockarea.on("touchstart mousedown", (e) => {
       e.preventDefault(); // touchstart以降のイベントを発生させない
       const targetid = this.clockmode ? e.currentTarget.id : e.currentTarget.parentElement.id;
       this.tapTimerAction(targetid);
     });
 
     //テーマが変更されたとき
-    $("#theme").on('change', () => {
+    this.theme.on("change", () => {
       const theme = $("[name=theme]:checked").val();
       this.changeTheme(theme);
     });
 
     //マッチ情報が変更されたとき
-    $("#matchlength, #allotedtimemin").on('change', () => {
-      const clockminutes = this.get_allowtimemin();
-      $("#allotedtime").text(clockminutes);
+    this.matchlength.on("change", () => { this.writeAllotedtime(); });
+    this.selminpoint.on("change", () => { this.writeAllotedtime(); });
+
+    //画面サイズが変更されたとき
+    $(window).on("resize", () => {
+      this.redraw();
     });
   }
 
@@ -97,7 +101,7 @@ class BgClockApp {
 
     this.clockplayer = BgUtil.getBdOppo(tappos); //タップの反対側のクロックを動かす
     const player = this.clockplayer;
-    const oppo = BgUtil.getBdOppo(this.clockplayer);
+    const oppo = BgUtil.getBdOppo(player);
 
     this.delay = this.delayInit; //保障時間を設定
     this.stopTimer(); //相手方のクロックをストップし
@@ -136,12 +140,6 @@ class BgClockApp {
     this.timeoutflg = false;
     this.flipcard.resetScore();
     this.setClockOption();
-    if (this.clockmode) {
-      $(".delay").hide();
-      $(".clock").removeClass("timeupLose");
-    } else {
-      this.pauseinfo.text("PAUSE").removeClass("timeupLose");
-    }
   }
 
   setClockOption() {
@@ -151,8 +149,12 @@ class BgClockApp {
 
     this.dispTimer(1, time, "pause");
     this.dispTimer(2, time, "pause");
-    if (!this.clockmode) {
+    if (this.clockmode) {
+      $(".delay").hide();
+      $(".clock").removeClass("timeupLose");
+    } else {
       this.dispDelay(null, this.delayInit);
+      this.pauseinfo.text("PAUSE").removeClass("timeupLose");
     }
   }
 
@@ -248,11 +250,16 @@ class BgClockApp {
   }
 
   get_allowtimemin() {
-    const matchlength = parseInt(this.matchlen.val());
+    const matchlength = parseInt(this.matchlength.val());
     const selminpoint = parseFloat(this.selminpoint.val());
     const maxmin = this.clockmode ? 100 : 720; //analogの最大値は720分(12時間)
     const time = (matchlength == 0) ? maxmin : Math.ceil(matchlength * selminpoint);
     return time;
+  }
+
+  writeAllotedtime() {
+    const clockminutes = this.get_allowtimemin();
+    $("#allotedtime").text(clockminutes);
   }
 
   //音とバイブレーション
@@ -264,7 +271,7 @@ class BgClockApp {
   //音を鳴らす
   sound(type) {
     if (this.soundflg) {
-      const audio = $('#' + type).get(0); //音の種類は引数で指定
+      const audio = $("#" + type).get(0); //音の種類は引数で指定
       //audio.load(); //連続再生に対応
       audio.play();
     }
@@ -287,14 +294,32 @@ class BgClockApp {
     return {top:wy, left:wx};
   }
 
+  //windowリサイズ時にアナログ時計を描き直す
+  redraw() {
+    if (this.clockmode) { return; } //以下の処理はanalogの時のみ
+    this.init_canvas();
+    //return; //時計再描画は次回描画時に
+
+    if (this.pauseflg) {
+      this.draw_timerframe(1, this.clock[1], "pause");
+      this.draw_timerframe(2, this.clock[2], "pause");
+    } else {
+      const play = this.clockplayer;
+      const oppo = BgUtil.getBdOppo(this.clockplayer);
+      this.draw_timerframe(play, this.clock[play], "teban");
+      this.draw_timerframe(oppo, this.clock[oppo], "noteban");
+    }
+    this.draw_delayframe(this.delayInit, this.delay);
+  }
+
   //canvasオブジェクト初期化
   init_canvas() {
     this.cv1.canvas = document.getElementById("clock1cv");
-    this.cv1.ctx = this.cv1.canvas.getContext('2d');
+    this.cv1.ctx = this.cv1.canvas.getContext("2d");
     this.cv2.canvas = document.getElementById("clock2cv");
-    this.cv2.ctx = this.cv2.canvas.getContext('2d');
+    this.cv2.ctx = this.cv2.canvas.getContext("2d");
     this.cv3.canvas = document.getElementById("delaycv");
-    this.cv3.ctx = this.cv3.canvas.getContext('2d');
+    this.cv3.ctx = this.cv3.canvas.getContext("2d");
     this.cv1.width  = $("#clock1").width();
     this.cv1.height = $("#clock1").height();
     this.cv2.width  = $("#clock2").width();
@@ -462,17 +487,17 @@ class BgClockApp {
   }
 
   saveSettingVars() {
-    this.settingVars.matchlength    = $("#matchlength").val();
-    this.settingVars.allotedtimemin = $("#allotedtimemin").val();
-    this.settingVars.delaytime      = $("#delaytime").val();
-    this.settingVars.sound          = $("[name=sound]").prop("checked");
-    this.settingVars.vibration      = $("[name=vibration]").prop("checked");
-    this.settingVars.hourhand       = $("[name=hourhand]").prop("checked");
+    this.settingVars.matchlength = $("#matchlength").val();
+    this.settingVars.selminpoint = $("#selminpoint").val();
+    this.settingVars.delaytime   = $("#delaytime").val();
+    this.settingVars.sound       = $("[name=sound]").prop("checked");
+    this.settingVars.vibration   = $("[name=vibration]").prop("checked");
+    this.settingVars.hourhand    = $("[name=hourhand]").prop("checked");
   }
 
   loadSettingVars() {
     $("#matchlength")    .val(this.settingVars.matchlength);
-    $("#allotedtimemin") .val(this.settingVars.allotedtimemin);
+    $("#selminpoint")    .val(this.settingVars.selminpoint);
     $("#delaytime")      .val(this.settingVars.delaytime);
     $("[name=sound]")    .prop("checked", this.settingVars.sound);
     $("[name=vibration]").prop("checked", this.settingVars.vibration);
