@@ -222,7 +222,7 @@ input:checked + .slider:before{
 .segmented .label{
   border:1px solid;
   float:left;
-  padding:0.5em 1em;
+  padding:0em 0.5em;
   text-align:center;
   width:12vw;
   background-color:var(--segmented-disable-bg);

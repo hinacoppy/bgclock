@@ -5,6 +5,7 @@ class BgClockApp {
   constructor(clockmode = true) {
     this.clockmode = clockmode;　//digital(T)/analog(F)
     this.flipcard = new FlipCard();
+    this.setTimeOptions();
     this.setDomNames();
     this.setEventHandler();
     this.themecolor = this.setThemeColor("cool");
@@ -17,6 +18,24 @@ class BgClockApp {
     this.initVariables();
     this.settingVars = {}; //設定内容を保持するオブジェクト
     if (BgUtil.isIOS()) { $("#tr_vibration").hide(); } //iOSのときはバイブレーションの設定項目を表示しない
+  }
+
+  setTimeOptions() {
+    $(".each").hide(); //最初は個別モードは非表示
+
+    let mopt = "";
+    for (let m = 0; m < 100; m++) {
+      const selected = (m == 10) ? " selected" : "";
+      mopt += "<option value='" + m + "'" + selected + ">" + ("00" + m).slice(-2) + "</option>";
+    }
+    $("#time1min, #time2min").append(mopt);
+
+    let sopt = "";
+    for (let s = 0; s < 60; s++) {
+      const selected = (s == 0) ? " selected" : "";
+      sopt += "<option value='" + s + "'" + selected + ">" + ("00" + s).slice(-2) + "</option>";
+    }
+    $("#time1sec, #time2sec").append(sopt);
   }
 
   //DOM定義
@@ -33,6 +52,7 @@ class BgClockApp {
     this.selminpoint = $("#selminpoint");
     this.seldelay = $("#delaytime");
     this.theme = $("#theme");
+    this.timesetting = $("#timesetting");
   }
 
   //イベントハンドラの定義
@@ -90,6 +110,13 @@ class BgClockApp {
     $(window).on("resize", () => {
       this.redraw();
     });
+
+    //クロック設定モード情報が変更されたとき
+    this.timesetting.on("change", () => {
+      this.timesettingflg = ($('[name="timesetting"]:checked').val() == "comm");
+      $(".comm").toggle( this.timesettingflg);
+      $(".each").toggle(!this.timesettingflg);
+    });
   }
 
   //タイマ部分クリック時の処理
@@ -136,6 +163,7 @@ class BgClockApp {
     this.vibrationflg = $("[name=vibration]").prop("checked");
     this.hourhandflg = $("[name=hourhand]").prop("checked");
     this.pauseflg = true; //pause状態で起動する
+    this.timesettingflg = ($('[name="timesetting"]:checked').val() == "comm"); //T=comm, F=each
     this.clockplayer = 0; //手番をリセット
     this.timeoutflg = false;
     this.flipcard.resetScore();
@@ -143,12 +171,18 @@ class BgClockApp {
   }
 
   setClockOption() {
-    const time = 60 * this.get_allowtimemin(); //設定時間 = ポイント数 x 時間(分) x 60(秒)
-    this.clock = [0, time, time];
+    let time1, time2;
+    if (this.timesettingflg) {
+      time1 = time2 = 60 * this.get_allowtimemin(); //設定時間 = ポイント数 x 時間(分) x 60(秒)
+    } else {
+      time1 = Number($("#time1min").val()) * 60 + Number($("#time1sec").val());
+      time2 = Number($("#time2min").val()) * 60 + Number($("#time2sec").val());
+    }
+    this.clock = [0, time1, time2];
     this.delayInit = parseInt(this.seldelay.val());
 
-    this.dispTimer(1, time, "pause");
-    this.dispTimer(2, time, "pause");
+    this.dispTimer(1, time1, "pause");
+    this.dispTimer(2, time2, "pause");
     if (this.clockmode) {
       $(".delay").hide();
       $(".clock").removeClass("timeupLose");
@@ -493,6 +527,10 @@ class BgClockApp {
     this.settingVars.sound       = $("[name=sound]").prop("checked");
     this.settingVars.vibration   = $("[name=vibration]").prop("checked");
     this.settingVars.hourhand    = $("[name=hourhand]").prop("checked");
+    this.settingVars.time1min    = $("#time1min").val();
+    this.settingVars.time1sec    = $("#time1sec").val();
+    this.settingVars.time2min    = $("#time2min").val();
+    this.settingVars.time2sec    = $("#time2sec").val();
   }
 
   loadSettingVars() {
@@ -503,6 +541,10 @@ class BgClockApp {
     $("[name=vibration]").prop("checked", this.settingVars.vibration);
     $("[name=hourhand]") .prop("checked", this.settingVars.hourhand);
     $("#allotedtime")    .text(this.get_allowtimemin());
+    $("#time1min")       .val(this.settingVars.time1min);
+    $("#time1sec")       .val(this.settingVars.time1sec);
+    $("#time2min")       .val(this.settingVars.time2min);
+    $("#time2sec")       .val(this.settingVars.time2sec);
   }
 
   //テーマカラーを変更

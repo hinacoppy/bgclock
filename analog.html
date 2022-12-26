@@ -66,7 +66,14 @@
 </select>
 ($ = Unlimited)
 </td></tr>
+<tr><td>Time setting:</td><td>
+  <span id="timesetting" class="segmented">
+    <label><input type="radio" name="timesetting" value="comm" checked><span class="label">Common</span></label>
+    <label><input type="radio" name="timesetting" value="each"><span class="label">Each</span></label>
+  </span>
+</td></tr>
 <tr><td>Clock time:</td><td>
+<span class="comm">
 <span id="allotedtime">10</span> min. = Pt x
 <select id="selminpoint" name="selminpoint">
 <option value="1">1</option>
@@ -74,6 +81,11 @@
 <option value="2.5">2.5</option>
 </select>
 min. &emsp;
+</span>
+<span class="each">
+Left:<select id="time1min" name="time1min"></select>:<select id="time1sec" name="time1sec"></select> &ensp;
+Right:<select id="time2min" name="time2min"></select>:<select id="time2sec" name="time2sec"></select> &emsp;
+</span>
 Delay:
 <select id="delaytime" name="delaytime">
 <option value="0">0</option>
@@ -110,7 +122,7 @@ sec.
 <a href="help.html" target="bgclockhelp"><button id="helpbtn" class="oparationbtn btnenable">HELP</button></a>
 </aside>
 
-<script src="/js/jquery-3.6.0.min.js"></script>
+<script src="/js/jquery-3.6.1.min.js"></script>
 <script src="/js/jquery.mobile-events.min.js"></script>
 <script src="/js/BgUtil_class.js"></script>
 <script src="/bgscoreapp/js/bgflipcard_class.js"></script>

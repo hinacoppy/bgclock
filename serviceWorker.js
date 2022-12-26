@@ -1,7 +1,7 @@
 /* serviceWorker.js */
 'use strict';
 
-const CACHE_NAME = "bgclock-v20220330";
+const CACHE_NAME = "bgclock-v20221226";
 const ORIGIN = (location.hostname == 'localhost') ? '' : location.protocol + '//' + location.hostname;
 
 const STATIC_FILES = [
@@ -29,7 +29,7 @@ const STATIC_FILES = [
   ORIGIN + '/bgclock/webfonts/DSEG7Classic-BoldItalic.woff',
   ORIGIN + '/bgscoreapp/js/bgflipcard_class.js',
   ORIGIN + '/js/BgUtil_class.js',
-  ORIGIN + '/js/jquery-3.6.0.min.js',
+  ORIGIN + '/js/jquery-3.6.1.min.js',
   ORIGIN + '/js/jquery.mobile-events.min.js',
   ORIGIN + '/js/start-serviceWorker.js'
 ];
