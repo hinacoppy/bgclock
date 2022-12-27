@@ -135,6 +135,9 @@ class BgClockApp {
   }
 
   enableCheckGyro() {
+    //ジャイロロジックで使う変数を定義・初期化
+    this.last_beta = 1;
+    this.lastActionTime = Date.now();
 console.log("enableCheckGyro()");
 alert("enableCheckGyro()");
     if (window.DeviceOrientationEvent) {
@@ -173,10 +176,8 @@ alert("FALSE : DeviceOrientationEvent.reqestPermission");
       alert("ジャイロセンサーが使用できません");
       $("[name=gyro]").prop("checked", false);
     }
+alert("last_beta=" + this.last_beta + "lastActionTime=" + this.lastActionTime);
 
-    //ジャイロロジックで使う変数を定義・初期化
-    this.last_beta = 1;
-    this.lastActionTime = Date.now();
   }
 
   gyroEventHandler(e) {
