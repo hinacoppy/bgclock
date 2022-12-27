@@ -193,13 +193,19 @@ $("#eventdiv3").text("last_beta * beta= " + this.last_beta * beta);
         this.last_beta = beta;
 $("#eventdiv4").text("last_beta=" + this.last_beta + " " + this.lastActionTime);
         if (this.pauseflg) { //ポーズのときは短時間(400ms)でフリックすることで、ポーズ解除とする
-          if (Date.now() - this.lastActionTime < 400) {
+          const diff Date.now() - this.lastActionTime;
+$("#eventdiv5").text("pauseflg=" + this.pauseflg + " diff=" + diff);
+          if (diff < 400) {
+//          if (Date.now() - this.lastActionTime < 400) {
             const targetid = (beta < 0) ? "clock1" : "clock2";
+$("#eventdiv6").text("targetid=" + targetid);
             this.tapTimerAction(targetid);
           } else {
+$("#eventdiv7").text("else " + this.lastActionTime);
             this.lastActionTime = Date.now();
           }
         } else { //ポーズじゃないときは
+$("#eventdiv8").text("gamemode targetid=" + targetid);
           //スマホを左に傾けたとき(beta < 0)は、左側のクロックをタップしたことにする
           const targetid = (beta < 0) ? "clock1" : "clock2";
           this.tapTimerAction(targetid);
@@ -210,6 +216,7 @@ $("#eventdiv4").text("last_beta=" + this.last_beta + " " + this.lastActionTime);
 
   //タイマ部分クリック時の処理
   tapTimerAction(targetid) {
+$("#eventdiv9").text("tapTimerAction(targetid)");
     if (this.timeoutflg) { return; } //タイマ切れ状態のときは何もしない
     const tappos = Number(targetid.slice(-1));
     if (!this.pauseflg && this.clockplayer != tappos) { return; }
