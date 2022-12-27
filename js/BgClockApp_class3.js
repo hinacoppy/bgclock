@@ -128,6 +128,8 @@ class BgClockApp {
       this.gyroflg = $("[name=gyro]").prop("checked");
       if (this.gyroflg) {
         this.enableCheckGyro();
+      } else {
+        $(window).off("deviceorientation");
       }
     });
   }
@@ -179,10 +181,11 @@ console.log("gyroEventHandler(e)");
     const beta = e.beta;
     const gamma = e.gamma;
     const absgamma = Math.abs(gamma)
-
+$("#eventdiv1").text("gamma= " + gamma + "\nbeta= " + beta);
     if (5 < absgamma && absgamma < 15) { //傾きが既定の範囲内で、
       if (this.last_gamma * gamma < 0) { //水平を超えて傾けられたとき(前回と今回の角度の符号が逆)
         this.last_gamma = gamma;
+$("#eventdiv2").text("last_gamma=" + this.last_gamma + " " + this.lastActionTime);
         if (this.pauseflg) { //ポーズのときは短時間(400ms)でフリックすることで、ポーズ解除とする
           if (Date.now() - this.lastActionTime < 400) {
             const targetid = (gamma < 0) ? "clock1" : "clock2";
