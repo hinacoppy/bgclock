@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="description" content="Backgammon Clock and Score board App">
+<meta name="author" content="(C)hinacoppy 2018 - 2022">
+<link rel="manifest" href="manifest-digital.json">
+<link rel="stylesheet" href="css/bgclock.css">
+<link rel="icon" href="icon/digital/favicon.ico">
+<link rel="apple-touch-icon" href="icon/digital/apple-touch-icon.png">
+<title>bgclock</title>
+</head>
+<body class="digital cool">
+
+<!-- downloaded from https://soundeffect-lab.info/ -->
+<audio id="tap"    src="sounds/decision1.mp3" preload="auto"></audio>
+<audio id="pause"  src="sounds/decision7.mp3" preload="auto"></audio>
+<audio id="buzzer" src="sounds/warning2.mp3"  preload="auto"></audio>
+
+<section id="mainwindow" class="mainwin">
+<div id="score1" class="cardcontainer">
+<div id="score1curr" class="card curr">0</div>
+<div id="score1next" class="card next"></div></div>
+
+<div id="score2" class="cardcontainer">
+<div id="score2curr" class="card curr">0</div>
+<div id="score2next" class="card next"></div></div>
+
+<div id="matchinfo">5</div>
+<div id="crawfordinfo"></div>
+
+<div id="clock1" class="clock teban_pause">10:00</div>
+<div id="clock2" class="clock teban_pause">10:00</div>
+<div id="delay1" class="delay">12</div>
+<div id="delay2" class="delay">12</div>
+<div id="pauseinfo" class="pauseinfo">PAUSE</div>
+
+<button id="pausebtn" class="oparationbtn btnenable">PAUSE</button>
+<button id="settingbtn" class="oparationbtn btnenable">SETTINGS</button>
+</section>
+
+<!-- 設定画面 -->
+<aside id="settingwindow" class="setting">
+<div class="settingtitle">### Backgammon Clock and Score board App Settings ###</div>
+<table>
+<tr><td>Match length:</td><td>
+<select id="matchlength" name="matchlength">
+<option value="0">$</option>
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="5" selected>5</option>
+<option value="7">7</option>
+<option value="9">9</option>
+<option value="11">11</option>
+<option value="13">13</option>
+<option value="15">15</option>
+<option value="17">17</option>
+<option value="19">19</option>
+<option value="21">21</option>
+<option value="23">23</option>
+<option value="25">25</option>
+</select>
+($ = Unlimited)
+</td></tr>
+<tr><td>Time setting:</td><td>
+  <span id="timesetting" class="segmented">
+    <label><input type="radio" name="timesetting" value="comm" checked><span class="label">Common</span></label>
+    <label><input type="radio" name="timesetting" value="each"><span class="label">Each</span></label>
+  </span>
+</td></tr>
+<tr><td>Clock time:</td><td>
+<span class="comm">
+<span id="allotedtime">10</span> min. = Pt x
+<select id="selminpoint" name="selminpoint">
+<option value="1">1</option>
+<option value="2" selected>2</option>
+<option value="2.5">2.5</option>
+</select>
+min. &emsp;
+</span>
+<span class="each">
+L:<select id="time1min" name="time1min"></select>:<select id="time1sec" name="time1sec"></select> &ensp;
+R:<select id="time2min" name="time2min"></select>:<select id="time2sec" name="time2sec"></select> &emsp;
+</span>
+Delay:
+<select id="delaytime" name="delaytime">
+<option value="0">0</option>
+<option value="5">5</option>
+<option value="10">10</option>
+<option value="12" selected>12</option>
+<option value="20">20</option>
+</select>
+sec.
+</td></tr>
+<tr><td>Sound:</td><td>
+<label class="switch"><input type="checkbox" id="sound" name="sound" checked>
+<span class="slider"></span></label>
+</td></tr>
+<tr id="tr_vibration"><td>Vibration:</td><td>
+<label class="switch"><input type="checkbox" id="vibration" name="vibration">
+<span class="slider"></span></label>
+</td></tr>
+<tr style="display:none"><td>Show hour-hand:</td><td>
+<label class="switch"><input type="checkbox" id="hourhand" name="hourhand" checked>
+<span class="slider"></span></label>
+</td></tr>
+<tr><td>Gyro:</td><td>
+<label class="switch"><input type="checkbox" id="gyro" name="gyro">
+<span class="slider"></span></label>
+</td></tr>
+<tr><td>Theme color:</td><td>
+  <span id="theme" class="segmented">
+    <label><input type="radio" name="theme" value="cool" checked><span class="label">Cool</span></label>
+    <label><input type="radio" name="theme" value="warm"><span class="label">Warm</span></label>
+    <label><input type="radio" name="theme" value="mono"><span class="label">Mono</span></label>
+  </span>
+</td></tr>
+</table>
+
+<button id="applybtn" class="oparationbtn btnenable">APPLY</button>&emsp;&emsp;&emsp;
+<button id="cancelbtn" class="oparationbtn btnenable">CANCEL</button>&emsp;&emsp;&emsp;
+<a href="help.html" target="bgclockhelp"><button id="helpbtn" class="oparationbtn btnenable">HELP</button></a>
+</aside>
+
+<script src="/js/jquery-3.6.1.min.js"></script>
+<script src="/js/jquery.mobile-events.min.js"></script>
+<script src="/js/BgUtil_class.js"></script>
+<script src="/bgscoreapp/js/bgflipcard_class.js"></script>
+<script src="js/BgClockApp_class3.js"></script>
+<script>
+var bgclock = new BgClockApp(true); //clockmode = digital(T)/analog(F)
+</script>
+<script src="/js/start-serviceWorker.js"></script>
+</body>
+</html>
