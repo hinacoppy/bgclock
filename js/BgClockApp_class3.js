@@ -143,11 +143,11 @@ alert("enableCheckGyro()");
         if (yesno) {
 console.log("YES : confirm()");
 alert("YES : confirm()");
-          DeviceOrientationEvent.requestPermission().then(function(response){
+          DeviceOrientationEvent.requestPermission().then((response) => {
             if (response === "granted") {
 console.log("response == granted");
 alert("response == granted");
-              $(window).on("deviceorientation", this.gyroEventHandler);
+              $(window).on("deviceorientation", (e) => { this.gyroEventHandler(e) });
             } else {
 console.log("response == NOT granted");
 alert("response == NOT granted");
@@ -164,7 +164,7 @@ alert("NO : confirm()");
       } else {
 console.log("FALSE : DeviceOrientationEvent.reqestPermission");
 alert("FALSE : DeviceOrientationEvent.reqestPermission");
-              $(window).on("deviceorientation", this.gyroEventHandler);
+              $(window).on("deviceorientation", (e) => { this.gyroEventHandler(e) });
       }
     } else {
       alert("ジャイロセンサーが使用できません");
@@ -172,7 +172,7 @@ alert("FALSE : DeviceOrientationEvent.reqestPermission");
     }
 
     //ジャイロロジックで使う変数を定義・初期化
-    this.last_gamma = 0;
+    this.last_beta = 0;
     this.lastActionTime = Date.now();
   }
 
@@ -180,22 +180,22 @@ alert("FALSE : DeviceOrientationEvent.reqestPermission");
 console.log("gyroEventHandler(e)");
     const beta = e.beta;
     const gamma = e.gamma;
-    const absgamma = Math.abs(gamma)
-$("#eventdiv1").text("gamma= " + gamma + "\nbeta= " + beta);
-    if (5 < absgamma && absgamma < 15) { //傾きが既定の範囲内で、
-      if (this.last_gamma * gamma < 0) { //水平を超えて傾けられたとき(前回と今回の角度の符号が逆)
-        this.last_gamma = gamma;
-$("#eventdiv2").text("last_gamma=" + this.last_gamma + " " + this.lastActionTime);
+    const absbeta = Math.abs(beta)
+$("#eventdiv1").text("beta= " + beta + "\nbeta= " + beta);
+    if (5 < absbeta && absbeta < 15) { //傾きが既定の範囲内で、
+      if (this.last_beta * beta < 0) { //水平を超えて傾けられたとき(前回と今回の角度の符号が逆)
+        this.last_beta = beta;
+$("#eventdiv2").text("last_beta=" + this.last_beta + " " + this.lastActionTime);
         if (this.pauseflg) { //ポーズのときは短時間(400ms)でフリックすることで、ポーズ解除とする
           if (Date.now() - this.lastActionTime < 400) {
-            const targetid = (gamma < 0) ? "clock1" : "clock2";
+            const targetid = (beta < 0) ? "clock1" : "clock2";
             this.tapTimerAction(targetid);
           } else {
             this.lastActionTime = Date.now();
           }
         } else { //ポーズじゃないときは
-          //スマホを左に傾けたとき(gamma < 0)は、左側のクロックをタップしたことにする
-          const targetid = (gamma < 0) ? "clock1" : "clock2";
+          //スマホを左に傾けたとき(beta < 0)は、左側のクロックをタップしたことにする
+          const targetid = (beta < 0) ? "clock1" : "clock2";
           this.tapTimerAction(targetid);
         }
       }
