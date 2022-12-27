@@ -205,9 +205,9 @@ $("#eventdiv7").text("else " + this.lastActionTime);
             this.lastActionTime = Date.now();
           }
         } else { //ポーズじゃないときは
-$("#eventdiv8").text("gamemode targetid=" + targetid);
           //スマホを左に傾けたとき(beta < 0)は、左側のクロックをタップしたことにする
           const targetid = (beta < 0) ? "clock1" : "clock2";
+$("#eventdiv8").text("gamemode targetid=" + targetid);
           this.tapTimerAction(targetid);
         }
       }
