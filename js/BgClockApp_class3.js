@@ -191,11 +191,11 @@ $("#eventdiv2").text("absbeta= " + absbeta + "last_beta=" + this.last_beta);
 $("#eventdiv3").text("last_beta * beta= " + this.last_beta * beta);
       if (this.last_beta * beta < 0) { //水平を超えて傾けられたとき(前回と今回の角度の符号が逆)
         this.last_beta = beta;
-$("#eventdiv4").text("last_beta=" + this.last_beta + " " + this.lastActionTime);
-        if (this.pauseflg) { //ポーズのときは短時間(400ms)でフリックすることで、ポーズ解除とする
+$("#eventdiv4").text("pauseflg=" + this.pauseflg + "last_beta=" + this.last_beta + " " + this.lastActionTime);
+        if (this.pauseflg) { //ポーズのときは短時間(1000ms)でフリックすることで、ポーズ解除とする
           const diff = Date.now() - this.lastActionTime;
 $("#eventdiv5").text("pauseflg=" + this.pauseflg + " diff=" + diff);
-          if (diff < 400) {
+          if (diff < 1000) {
 //          if (Date.now() - this.lastActionTime < 400) {
             const targetid = (beta < 0) ? "clock1" : "clock2";
 $("#eventdiv6").text("targetid=" + targetid);
