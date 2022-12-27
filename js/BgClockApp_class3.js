@@ -125,7 +125,12 @@ class BgClockApp {
 
     //ジャイロモードのスイッチが変更されたとき
     $("#gyro").on("change", () => {
-      this.enableCheckGyro();
+      this.gyroflg = $("[name=gyro]").prop("checked");
+      if (this.gyroflg) {
+        this.enableCheckGyro();
+      } else {
+        window.removeEventListener("deviceorientation", (e) => { this.gyroEventHandler(e); });
+      }
     });
   }
 
@@ -176,20 +181,17 @@ alert("FALSE : DeviceOrientationEvent.reqestPermission");
     }
 
     //ジャイロロジックで使う変数を定義・初期化
-    $("[name=gyro]").prop("checked", gyroenable);
     this.gyroflg = gyroenable;
     this.last_beta = 1;
     this.lastActionTime = Date.now();
 
     if (gyroenable) {
-//      $("[name=gyro]").prop("checked", true);
       window.addEventListener("deviceorientation", (e) => { this.gyroEventHandler(e); });
     } else {
-      window.removeEventListener("deviceorientation", (e) => { this.gyroEventHandler(e); });
-//      $(window).off("deviceorientation");
+      $("[name=gyro]").prop("checked", gyroenable);
     }
 
-alert("last_beta=" + this.last_beta + "lastActionTime=" + this.lastActionTime);
+//alert("last_beta=" + this.last_beta + "lastActionTime=" + this.lastActionTime);
 alert("gyroenable=" + gyroenable, " this.gyroflg=" + this.gyroflg);
   }
 
@@ -205,11 +207,11 @@ $("#eventdiv3").text("last_beta * beta= " + this.last_beta * beta);
       if (this.last_beta * beta < 0) { //水平を超えて傾けられたとき(前回と今回の角度の符号が逆)
         this.last_beta = beta;
 $("#eventdiv4").text("pauseflg=" + this.pauseflg + "last_beta=" + this.last_beta + " " + this.lastActionTime);
-        if (this.pauseflg) { //ポーズのときは短時間(1000ms)でフリックすることで、ポーズ解除とする
+        if (this.pauseflg) { //ポーズのときは短時間(600ms)でフリックすることで、ポーズ解除とする
           const diff = Date.now() - this.lastActionTime;
 $("#eventdiv5").text("pauseflg=" + this.pauseflg + " diff=" + diff);
-          if (diff < 1000) {
-//          if (Date.now() - this.lastActionTime < 400) {
+          if (diff < 600) {
+//          if (Date.now() - this.lastActionTime < 600) {
             const targetid = (beta < 0) ? "clock1" : "clock2";
 $("#eventdiv6").text("targetid=" + targetid);
             this.tapTimerAction(targetid);
@@ -229,7 +231,7 @@ $("#eventdiv8").text("gamemode targetid=" + targetid);
 
   //タイマ部分クリック時の処理
   tapTimerAction(targetid) {
-$("#eventdiv9").text("tapTimerAction(targetid)");
+$("#eventdiv9").text("tapTimerAction(targetid)", targetid);
     if (this.timeoutflg) { return; } //タイマ切れ状態のときは何もしない
     const tappos = Number(targetid.slice(-1));
     if (!this.pauseflg && this.clockplayer != tappos) { return; }
