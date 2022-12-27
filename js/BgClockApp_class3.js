@@ -184,11 +184,12 @@ alert("FALSE : DeviceOrientationEvent.reqestPermission");
     const gamma = e.gamma;
     const absbeta = Math.abs(beta)
 $("#eventdiv1").text("beta= " + beta);
-$("#eventdiv2").text("gamma= " + gamma);
     if (5 < absbeta && absbeta < 15) { //傾きが既定の範囲内で、
+$("#eventdiv2").text("absbeta= " + absbeta + "last_beta=" + this.last_beta);
+$("#eventdiv3").text("last_beta * beta= " + this.last_beta * beta);
       if (this.last_beta * beta < 0) { //水平を超えて傾けられたとき(前回と今回の角度の符号が逆)
         this.last_beta = beta;
-$("#eventdiv3").text("last_beta=" + this.last_beta + " " + this.lastActionTime);
+$("#eventdiv4").text("last_beta=" + this.last_beta + " " + this.lastActionTime);
         if (this.pauseflg) { //ポーズのときは短時間(400ms)でフリックすることで、ポーズ解除とする
           if (Date.now() - this.lastActionTime < 400) {
             const targetid = (beta < 0) ? "clock1" : "clock2";
