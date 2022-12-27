@@ -193,7 +193,7 @@ $("#eventdiv3").text("last_beta * beta= " + this.last_beta * beta);
         this.last_beta = beta;
 $("#eventdiv4").text("last_beta=" + this.last_beta + " " + this.lastActionTime);
         if (this.pauseflg) { //ポーズのときは短時間(400ms)でフリックすることで、ポーズ解除とする
-          const diff Date.now() - this.lastActionTime;
+          const diff = Date.now() - this.lastActionTime;
 $("#eventdiv5").text("pauseflg=" + this.pauseflg + " diff=" + diff);
           if (diff < 400) {
 //          if (Date.now() - this.lastActionTime < 400) {
