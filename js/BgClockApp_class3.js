@@ -174,20 +174,21 @@ alert("FALSE : DeviceOrientationEvent.reqestPermission");
     }
 
     //ジャイロロジックで使う変数を定義・初期化
-    this.last_beta = 0;
+    this.last_beta = 1;
     this.lastActionTime = Date.now();
   }
 
   gyroEventHandler(e) {
-console.log("gyroEventHandler(e)");
+//console.log("gyroEventHandler(e)");
     const beta = e.beta;
     const gamma = e.gamma;
     const absbeta = Math.abs(beta)
-$("#eventdiv1").text("beta= " + beta + " gamma= " + gamma);
+$("#eventdiv1").text("beta= " + beta);
+$("#eventdiv2").text("gamma= " + gamma);
     if (5 < absbeta && absbeta < 15) { //傾きが既定の範囲内で、
       if (this.last_beta * beta < 0) { //水平を超えて傾けられたとき(前回と今回の角度の符号が逆)
         this.last_beta = beta;
-$("#eventdiv2").text("last_beta=" + this.last_beta + " " + this.lastActionTime);
+$("#eventdiv3").text("last_beta=" + this.last_beta + " " + this.lastActionTime);
         if (this.pauseflg) { //ポーズのときは短時間(400ms)でフリックすることで、ポーズ解除とする
           if (Date.now() - this.lastActionTime < 400) {
             const targetid = (beta < 0) ? "clock1" : "clock2";
