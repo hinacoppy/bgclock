@@ -148,7 +148,8 @@ alert("YES : confirm()");
 console.log("response == granted");
 alert("response == granted");
 //              $(window).on("deviceorientation", (e) => { this.gyroEventHandler(e) });
-              window.addEventListener("deviceorientation", this.gyroEventHandler, true);
+//              window.addEventListener("deviceorientation", this.gyroEventHandler, true);
+              window.addEventListener("deviceorientation", (e) => { this.gyroEventHandler(e); }, false);
             } else {
 console.log("response == NOT granted");
 alert("response == NOT granted");
@@ -166,7 +167,7 @@ alert("NO : confirm()");
 console.log("FALSE : DeviceOrientationEvent.reqestPermission");
 alert("FALSE : DeviceOrientationEvent.reqestPermission");
 //              $(window).on("deviceorientation", (e) => { this.gyroEventHandler(e) });
-              window.addEventListener("deviceorientation", this.gyroEventHandler, true);
+              window.addEventListener("deviceorientation", (e) => { this.gyroEventHandler(e); }, false);
       }
     } else {
       alert("ジャイロセンサーが使用できません");
