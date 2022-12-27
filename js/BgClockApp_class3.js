@@ -147,7 +147,8 @@ alert("YES : confirm()");
             if (response === "granted") {
 console.log("response == granted");
 alert("response == granted");
-              $(window).on("deviceorientation", (e) => { this.gyroEventHandler(e) });
+//              $(window).on("deviceorientation", (e) => { this.gyroEventHandler(e) });
+              window.addEventListener("deviceorientation", this.gyroEventHandler, true);
             } else {
 console.log("response == NOT granted");
 alert("response == NOT granted");
@@ -164,7 +165,8 @@ alert("NO : confirm()");
       } else {
 console.log("FALSE : DeviceOrientationEvent.reqestPermission");
 alert("FALSE : DeviceOrientationEvent.reqestPermission");
-              $(window).on("deviceorientation", (e) => { this.gyroEventHandler(e) });
+//              $(window).on("deviceorientation", (e) => { this.gyroEventHandler(e) });
+              window.addEventListener("deviceorientation", this.gyroEventHandler, true);
       }
     } else {
       alert("ジャイロセンサーが使用できません");
@@ -181,7 +183,7 @@ console.log("gyroEventHandler(e)");
     const beta = e.beta;
     const gamma = e.gamma;
     const absbeta = Math.abs(beta)
-$("#eventdiv1").text("beta= " + beta + "\nbeta= " + beta);
+$("#eventdiv1").text("beta= " + beta + " gamma= " + gamma);
     if (5 < absbeta && absbeta < 15) { //傾きが既定の範囲内で、
       if (this.last_beta * beta < 0) { //水平を超えて傾けられたとき(前回と今回の角度の符号が逆)
         this.last_beta = beta;
