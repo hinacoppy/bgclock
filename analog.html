@@ -46,7 +46,7 @@
 <aside id="settingwindow" class="setting">
 <div class="settingtitle">### Backgammon Clock and Score board App Settings ###</div>
 <table>
-<tr><td>Match length:</td><td>
+<tr><td>Match length:</td><td colspan=5>
 <select id="matchlength" name="matchlength">
 <option value="0">$</option>
 <option value="1">1</option>
@@ -66,13 +66,13 @@
 </select>
 ($ = Unlimited)
 </td></tr>
-<tr><td>Time setting:</td><td>
+<tr><td>Time setting:</td><td colspan=5>
   <span id="timesetting" class="segmented">
     <label><input type="radio" name="timesetting" value="comm" checked><span class="label">Common</span></label>
     <label><input type="radio" name="timesetting" value="each"><span class="label">Each</span></label>
   </span>
 </td></tr>
-<tr><td>Clock time:</td><td>
+<tr><td>Clock time:</td><td colspan=5>
 <span class="comm">
 <span id="allotedtime">10</span> min. = Pt x
 <select id="selminpoint" name="selminpoint">
@@ -83,8 +83,8 @@
 min. &emsp;
 </span>
 <span class="each">
-Left:<select id="time1min" name="time1min"></select>:<select id="time1sec" name="time1sec"></select> &ensp;
-Right:<select id="time2min" name="time2min"></select>:<select id="time2sec" name="time2sec"></select> &emsp;
+L:<select id="time1min" name="time1min"></select>:<select id="time1sec" name="time1sec"></select> &ensp;
+R:<select id="time2min" name="time2min"></select>:<select id="time2sec" name="time2sec"></select> &ensp;
 </span>
 Delay:
 <select id="delaytime" name="delaytime">
@@ -96,19 +96,23 @@ Delay:
 </select>
 sec.
 </td></tr>
-<tr><td>Sound:</td><td>
+<tr><td>Sound:&ensp;</td><td>
 <label class="switch"><input type="checkbox" id="sound" name="sound" checked>
 <span class="slider"></span></label>
-</td></tr>
-<tr id="tr_vibration"><td>Vibration:</td><td>
+</td>
+<td class="vibration">Vibration:&ensp;</td><td class="vibration">
 <label class="switch"><input type="checkbox" id="vibration" name="vibration">
 <span class="slider"></span></label>
+</td>
+<td>Gyro:&ensp;</td><td>
+<label class="switch"><input type="checkbox" id="gyro" name="gyro">
+<span class="slider"></span></label>
 </td></tr>
-<tr><td>Show hour-hand:</td><td>
+<tr class="analog"><td>Show hour-hand:&ensp;</td><td>
 <label class="switch"><input type="checkbox" id="hourhand" name="hourhand" checked>
 <span class="slider"></span></label>
 </td></tr>
-<tr><td>Theme color:</td><td>
+<tr><td>Theme color:</td><td colspan=5>
   <span id="theme" class="segmented">
     <label><input type="radio" name="theme" value="cool" checked><span class="label">Cool</span></label>
     <label><input type="radio" name="theme" value="warm"><span class="label">Warm</span></label>
@@ -126,7 +130,7 @@ sec.
 <script src="/js/jquery.mobile-events.min.js"></script>
 <script src="/js/BgUtil_class.js"></script>
 <script src="/bgscoreapp/js/bgflipcard_class.js"></script>
-<script src="js/BgClockApp_class.js"></script>
+<script src="js/BgClockApp_class2.js"></script>
 <script>
 var bgclock = new BgClockApp(false); //clockmode = digital(T)/analog(F)
 </script>
