@@ -17,7 +17,9 @@ class BgClockApp {
     }
     this.initVariables();
     this.settingVars = {}; //設定内容を保持するオブジェクト
-    if (BgUtil.isIOS()) { $("#tr_vibration").hide(); } //iOSのときはバイブレーションの設定項目を表示しない
+    this.gyroEventHandleFunction = (e) => { this.gyroEventHandler(e); } //イベントハンドラ関数を変数化
+    $(".analog").toggle(!this.clockmode); //長針表示チェックボックスはアナログ時計のときのみ表示
+    if (BgUtil.isIOS()) { $(".vibration").hide(); } //iOSのときはバイブレーションの設定項目を表示しない
   }
 
   setTimeOptions() {
@@ -53,6 +55,7 @@ class BgClockApp {
     this.seldelay = $("#delaytime");
     this.theme = $("#theme");
     this.timesetting = $("#timesetting");
+    this.gyrochkbox = $("#gyro");
   }
 
   //イベントハンドラの定義
@@ -92,6 +95,11 @@ class BgClockApp {
     //クロックの場所がクリック(タップ)されたとき
     this.clockarea.on("touchstart mousedown", (e) => {
       e.preventDefault(); // touchstart以降のイベントを発生させない
+      if (this.gyroflg) { //ジャイロモードのときはポーズボタンの機能
+        this.pause_in();
+        this.stopTimer();
+        return; //elseを書かない
+      }
       const targetid = this.clockmode ? e.currentTarget.id : e.currentTarget.parentElement.id;
       this.tapTimerAction(targetid);
     });
@@ -117,6 +125,70 @@ class BgClockApp {
       $(".comm").toggle( this.timesettingflg);
       $(".each").toggle(!this.timesettingflg);
     });
+
+    //ジャイロモードのスイッチが変更されたとき
+    this.gyrochkbox.on("change", () => {
+      this.gyroflg = this.gyrochkbox.prop("checked");
+      if (this.gyroflg) {
+        this.enableCheckGyro();
+      } else {
+        window.removeEventListener("deviceorientation", this.gyroEventHandleFunction);
+      }
+    });
+  }
+
+  enableCheckGyro() {
+    if (window.DeviceOrientationEvent) {
+      if (DeviceOrientationEvent.requestPermission) {
+        //iPhone OS >13
+        alert("ジャイロセンサーへのアクセス許可を申請");
+        DeviceOrientationEvent.requestPermission().then((response) => {
+          if (response === "granted") {
+            this.gyroflg = true;
+            window.addEventListener("deviceorientation", this.gyroEventHandleFunction);
+          } else {
+            alert("ジャイロセンサーへのアクセスが拒否された");
+            this.gyroflg = false;
+            this.gyrochkbox.prop("checked", false);
+          }
+        });
+      } else {
+        //Android and iPhone OS <12
+        this.gyroflg = true;
+        window.addEventListener("deviceorientation", this.gyroEventHandleFunction);
+      }
+    } else {
+      alert("ジャイロセンサーが使用できない"); //PC等
+      this.gyroflg = false;
+      this.gyrochkbox.prop("checked", false);
+    }
+
+    //ジャイロロジックで使う変数を定義・初期化
+    this.last_beta = 1;
+    this.lastActionTime = Date.now();
+  }
+
+  gyroEventHandler(e) {
+    const beta = e.beta;
+    const gamma = e.gamma; //使ってない
+    const absbeta = Math.abs(beta)
+    if (3 < absbeta && absbeta < 8) { //傾きが既定の範囲内で、
+      if (this.last_beta * beta < 0) { //水平を超えて傾けられたとき(前回と今回の角度の符号が逆)
+        this.last_beta = beta;
+        if (this.pauseflg) { //ポーズのときは短時間(500ms)でフリックすることで、ポーズ解除とする
+          if (Date.now() - this.lastActionTime < 500) {
+            const targetid = (beta < 0) ? "clock1" : "clock2";
+            this.tapTimerAction(targetid);
+          } else {
+            this.lastActionTime = Date.now();
+          }
+        } else { //ポーズじゃないときは
+          //スマホを左に傾けたとき(beta < 0)は、左側のクロックをタップしたことにする
+          const targetid = (beta < 0) ? "clock1" : "clock2";
+          this.tapTimerAction(targetid);
+        }
+      }
+    }
   }
 
   //タイマ部分クリック時の処理
