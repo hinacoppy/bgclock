@@ -127,9 +127,7 @@ class BgClockApp {
     });
 
     //ジャイロモードのスイッチが変更されたとき
-//    $("#gyro").on("change", () => {
     this.gyrochkbox.on("change", () => {
-//      this.gyroflg = $("[name=gyro]").prop("checked");
       this.gyroflg = this.gyrochkbox.prop("checked");
       if (this.gyroflg) {
         this.enableCheckGyro();
@@ -140,54 +138,60 @@ class BgClockApp {
   }
 
   enableCheckGyro() {
-    let gyroenable = false;
+//    let gyroenable = true;
 alert("enableCheckGyro()");
     if (window.DeviceOrientationEvent) {
 alert("D typeof " + (typeof DeviceOrientationEvent.requestPermission));
 alert("D bool " + !!(DeviceOrientationEvent.requestPermission));
       if (DeviceOrientationEvent.requestPermission) {
-        const yesno = confirm("ジャイロセンサーへのアクセス許可を申請");
-        if (yesno) {
+        //iPhone OS >13
+//        gyroenable = true;
+//        const yesno = confirm("ジャイロセンサーへのアクセス許可を申請");
+        alert("ジャイロセンサーへのアクセス許可を申請");
+//        if (yesno) {
 alert("YES : confirm()");
           DeviceOrientationEvent.requestPermission().then((response) => {
             if (response === "granted") {
 alert("response == granted");
-              gyroenable = true;
-      window.addEventListener("deviceorientation", this.gyroEventHandleFunction);
+//              gyroenable = true;
+              window.addEventListener("deviceorientation", this.gyroEventHandleFunction);
             } else {
 alert("response == NOT granted");
               alert("ジャイロセンサーへのアクセスが拒否された");
-              gyroenable = false;
+              this.gyrochkbox.prop("checked", false);
+//              gyroenable = false;
             }
           });
-        } else {
-alert("NO : confirm()");
-          alert("ジャイロセンサーを使用しない");
-          gyroenable = false;
-        }
+//        } else {
+//alert("NO : confirm()");
+//          alert("ジャイロセンサーを使用しない");
+//          gyroenable = false;
+//        }
       } else {
 alert("FALSE : DeviceOrientationEvent.reqestPermission");
-         gyroenable = true;
+        //Android and iPhone OS <12
+        window.addEventListener("deviceorientation", this.gyroEventHandleFunction);
+//         gyroenable = true;
       }
     } else {
-      alert("ジャイロセンサーが使用できない");
-      gyroenable = false;
-    }
-
-    //ジャイロロジックで使う変数を定義・初期化
-    this.gyroflg = gyroenable;
-    this.last_beta = 1;
-    this.lastActionTime = Date.now();
-
-    if (gyroenable) {
-      window.addEventListener("deviceorientation", this.gyroEventHandleFunction);
-    } else {
-//      $("[name=gyro]").prop("checked", false);
+      alert("ジャイロセンサーが使用できない"); //PC等
+//      gyroenable = false;
       this.gyrochkbox.prop("checked", false);
     }
 
+    //ジャイロロジックで使う変数を定義・初期化
+//    this.gyroflg = gyroenable;
+    this.gyroflg = this.gyrochkbox.prop("checked");
+    this.last_beta = 1;
+    this.lastActionTime = Date.now();
+
+//    this.gyrochkbox.prop("checked", gyroenable);
+//    if (gyroenable) {
+//      window.addEventListener("deviceorientation", this.gyroEventHandleFunction);
+//    }
+
 //alert("last_beta=" + this.last_beta + "lastActionTime=" + this.lastActionTime);
-alert("gyroenable=" + gyroenable + " this.gyroflg=" + this.gyroflg);
+alert(" this.gyroflg=" + this.gyroflg);
   }
 
   gyroEventHandler(e) {
