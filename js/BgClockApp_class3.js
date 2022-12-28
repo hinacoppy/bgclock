@@ -55,6 +55,7 @@ class BgClockApp {
     this.seldelay = $("#delaytime");
     this.theme = $("#theme");
     this.timesetting = $("#timesetting");
+    this.gyrochkbox = $("#gyro");
   }
 
   //イベントハンドラの定義
@@ -94,7 +95,7 @@ class BgClockApp {
     //クロックの場所がクリック(タップ)されたとき
     this.clockarea.on("touchstart mousedown", (e) => {
       e.preventDefault(); // touchstart以降のイベントを発生させない
-      if (this.gyroflg) { //ジャイロモードのときはクロックの場所をクリックでポーズに
+      if (this.gyroflg) { //ジャイロモードのときはポーズボタンの機能
         this.pause_in();
         this.stopTimer();
         return; //elseを書かない
@@ -126,8 +127,10 @@ class BgClockApp {
     });
 
     //ジャイロモードのスイッチが変更されたとき
-    $("#gyro").on("change", () => {
-      this.gyroflg = $("[name=gyro]").prop("checked");
+//    $("#gyro").on("change", () => {
+    this.gyrochkbox.on("change", () => {
+//      this.gyroflg = $("[name=gyro]").prop("checked");
+      this.gyroflg = this.gyrochkbox.prop("checked");
       if (this.gyroflg) {
         this.enableCheckGyro();
       } else {
@@ -141,7 +144,7 @@ class BgClockApp {
 alert("enableCheckGyro()");
     if (window.DeviceOrientationEvent) {
       if (DeviceOrientationEvent.reqestPermission) {
-        const yesno = confirm("ジャイロセンサーへのアクセス許可を申請しますか？");
+        const yesno = confirm("ジャイロセンサーへのアクセス許可を申請");
         if (yesno) {
 alert("YES : confirm()");
           DeviceOrientationEvent.requestPermission().then((response) => {
@@ -150,13 +153,13 @@ alert("response == granted");
               gyroenable = true;
             } else {
 alert("response == NOT granted");
-              alert("ジャイロセンサーへのアクセスが拒否されました");
+              alert("ジャイロセンサーへのアクセスが拒否された");
               gyroenable = false;
             }
           });
         } else {
 alert("NO : confirm()");
-          alert("ジャイロセンサーを使用しません");
+          alert("ジャイロセンサーを使用しない");
           gyroenable = false;
         }
       } else {
@@ -164,7 +167,7 @@ alert("FALSE : DeviceOrientationEvent.reqestPermission");
          gyroenable = true;
       }
     } else {
-      alert("ジャイロセンサーが使用できません");
+      alert("ジャイロセンサーが使用できない");
       gyroenable = false;
     }
 
@@ -176,7 +179,8 @@ alert("FALSE : DeviceOrientationEvent.reqestPermission");
     if (gyroenable) {
       window.addEventListener("deviceorientation", this.gyroEventHandleFunction);
     } else {
-      $("[name=gyro]").prop("checked", false);
+//      $("[name=gyro]").prop("checked", false);
+      this.gyrochkbox.prop("checked", false);
     }
 
 //alert("last_beta=" + this.last_beta + "lastActionTime=" + this.lastActionTime);
@@ -185,20 +189,20 @@ alert("gyroenable=" + gyroenable, " this.gyroflg=" + this.gyroflg);
 
   gyroEventHandler(e) {
     const beta = e.beta;
-    const gamma = e.gamma;
+    const gamma = e.gamma; //使ってない
     const absbeta = Math.abs(beta)
 $("#eventdiv1").text("beta= " + beta);
-    if (5 < absbeta && absbeta < 15) { //傾きが既定の範囲内で、
+    if (3 < absbeta && absbeta < 8) { //傾きが既定の範囲内で、
 $("#eventdiv2").text("absbeta= " + absbeta + "last_beta=" + this.last_beta);
-$("#eventdiv3").text("last_beta * beta= " + this.last_beta * beta);
       if (this.last_beta * beta < 0) { //水平を超えて傾けられたとき(前回と今回の角度の符号が逆)
+$("#eventdiv3").text("last_beta * beta= " + this.last_beta * beta);
         this.last_beta = beta;
 $("#eventdiv4").text("pauseflg=" + this.pauseflg + "last_beta=" + this.last_beta + " " + this.lastActionTime);
-        if (this.pauseflg) { //ポーズのときは短時間(600ms)でフリックすることで、ポーズ解除とする
+        if (this.pauseflg) { //ポーズのときは短時間(500ms)でフリックすることで、ポーズ解除とする
           const diff = Date.now() - this.lastActionTime;
 $("#eventdiv5").text("pauseflg=" + this.pauseflg + " diff=" + diff);
-          if (diff < 600) {
-//          if (Date.now() - this.lastActionTime < 600) {
+          if (diff < 500) {
+//          if (Date.now() - this.lastActionTime < 500) {
             const targetid = (beta < 0) ? "clock1" : "clock2";
 $("#eventdiv6").text("targetid=" + targetid);
             this.tapTimerAction(targetid);
