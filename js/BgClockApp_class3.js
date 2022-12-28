@@ -17,6 +17,7 @@ class BgClockApp {
     }
     this.initVariables();
     this.settingVars = {}; //設定内容を保持するオブジェクト
+    this.gyroEventHandleFunction = (e) => { this.gyroEventHandler(e); } //イベントハンドラ関数を変数化
     if (BgUtil.isIOS()) { $("#tr_vibration").hide(); } //iOSのときはバイブレーションの設定項目を表示しない
   }
 
@@ -129,7 +130,8 @@ class BgClockApp {
       if (this.gyroflg) {
         this.enableCheckGyro();
       } else {
-        window.removeEventListener("deviceorientation", (e) => { this.gyroEventHandler(e); });
+alert("removeEventListener()");
+        window.removeEventListener("deviceorientation", this.gyroEventHandleFunction);
       }
     });
   }
@@ -186,7 +188,7 @@ alert("FALSE : DeviceOrientationEvent.reqestPermission");
     this.lastActionTime = Date.now();
 
     if (gyroenable) {
-      window.addEventListener("deviceorientation", (e) => { this.gyroEventHandler(e); });
+      window.addEventListener("deviceorientation", this.gyroEventHandleFunction);
     } else {
       $("[name=gyro]").prop("checked", gyroenable);
     }
