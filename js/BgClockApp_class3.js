@@ -143,6 +143,8 @@ class BgClockApp {
     let gyroenable = false;
 alert("enableCheckGyro()");
     if (window.DeviceOrientationEvent) {
+alert("DeviceOrientationEvent.reqestPermission typeof", (typeof DeviceOrientationEvent.reqestPermission));
+alert("DeviceOrientationEvent.reqestPermission", (DeviceOrientationEvent.reqestPermission));
       if (DeviceOrientationEvent.reqestPermission) {
         const yesno = confirm("ジャイロセンサーへのアクセス許可を申請");
         if (yesno) {
