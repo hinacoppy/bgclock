@@ -143,9 +143,8 @@ class BgClockApp {
     let gyroenable = false;
 alert("enableCheckGyro()");
     if (window.DeviceOrientationEvent) {
-alert("D typeof" + (typeof DeviceOrientationEvent.requestPermission));
-alert("D bool" + !!(DeviceOrientationEvent.requestPermission));
-alert("D" + (DeviceOrientationEvent.requestPermission));
+alert("D typeof " + (typeof DeviceOrientationEvent.requestPermission));
+alert("D bool " + !!(DeviceOrientationEvent.requestPermission));
       if (DeviceOrientationEvent.requestPermission) {
         const yesno = confirm("ジャイロセンサーへのアクセス許可を申請");
         if (yesno) {
@@ -154,6 +153,7 @@ alert("YES : confirm()");
             if (response === "granted") {
 alert("response == granted");
               gyroenable = true;
+      window.addEventListener("deviceorientation", this.gyroEventHandleFunction);
             } else {
 alert("response == NOT granted");
               alert("ジャイロセンサーへのアクセスが拒否された");
@@ -187,7 +187,7 @@ alert("FALSE : DeviceOrientationEvent.reqestPermission");
     }
 
 //alert("last_beta=" + this.last_beta + "lastActionTime=" + this.lastActionTime);
-alert("gyroenable=" + gyroenable, " this.gyroflg=" + this.gyroflg);
+alert("gyroenable=" + gyroenable + " this.gyroflg=" + this.gyroflg);
   }
 
   gyroEventHandler(e) {
