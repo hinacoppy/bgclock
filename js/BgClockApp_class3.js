@@ -18,7 +18,8 @@ class BgClockApp {
     this.initVariables();
     this.settingVars = {}; //設定内容を保持するオブジェクト
     this.gyroEventHandleFunction = (e) => { this.gyroEventHandler(e); } //イベントハンドラ関数を変数化
-    if (BgUtil.isIOS()) { $("#tr_vibration").hide(); } //iOSのときはバイブレーションの設定項目を表示しない
+    $(".analog").toggle(!this.clockmode); //長針表示チェックボックスはアナログ時計のときのみ表示
+    if (BgUtil.isIOS()) { $(".vibration").hide(); } //iOSのときはバイブレーションの設定項目を表示しない
   }
 
   setTimeOptions() {
@@ -130,7 +131,6 @@ class BgClockApp {
       if (this.gyroflg) {
         this.enableCheckGyro();
       } else {
-alert("removeEventListener()");
         window.removeEventListener("deviceorientation", this.gyroEventHandleFunction);
       }
     });
@@ -138,48 +138,34 @@ alert("removeEventListener()");
 
   enableCheckGyro() {
     let gyroenable = false;
-//console.log("enableCheckGyro()");
 alert("enableCheckGyro()");
     if (window.DeviceOrientationEvent) {
       if (DeviceOrientationEvent.reqestPermission) {
         const yesno = confirm("ジャイロセンサーへのアクセス許可を申請しますか？");
         if (yesno) {
-//console.log("YES : confirm()");
 alert("YES : confirm()");
           DeviceOrientationEvent.requestPermission().then((response) => {
             if (response === "granted") {
-//console.log("response == granted");
 alert("response == granted");
-//              $(window).on("deviceorientation", (e) => { this.gyroEventHandler(e) });
-//              window.addEventListener("deviceorientation", this.gyroEventHandler, true);
-//              window.addEventListener("deviceorientation", (e) => { this.gyroEventHandler(e); }, false);
               gyroenable = true;
             } else {
-//console.log("response == NOT granted");
 alert("response == NOT granted");
               alert("ジャイロセンサーへのアクセスが拒否されました");
               gyroenable = false;
-//              $("[name=gyro]").prop("checked", false);
             }
           });
         } else {
-//console.log("NO : confirm()");
 alert("NO : confirm()");
           alert("ジャイロセンサーを使用しません");
           gyroenable = false;
-//          $("[name=gyro]").prop("checked", false);
         }
       } else {
-//console.log("FALSE : DeviceOrientationEvent.reqestPermission");
 alert("FALSE : DeviceOrientationEvent.reqestPermission");
-//              $(window).on("deviceorientation", (e) => { this.gyroEventHandler(e) });
-//              window.addEventListener("deviceorientation", (e) => { this.gyroEventHandler(e); }, false);
          gyroenable = true;
       }
     } else {
       alert("ジャイロセンサーが使用できません");
       gyroenable = false;
-//      $("[name=gyro]").prop("checked", false);
     }
 
     //ジャイロロジックで使う変数を定義・初期化
@@ -190,7 +176,7 @@ alert("FALSE : DeviceOrientationEvent.reqestPermission");
     if (gyroenable) {
       window.addEventListener("deviceorientation", this.gyroEventHandleFunction);
     } else {
-      $("[name=gyro]").prop("checked", gyroenable);
+      $("[name=gyro]").prop("checked", false);
     }
 
 //alert("last_beta=" + this.last_beta + "lastActionTime=" + this.lastActionTime);
@@ -198,7 +184,6 @@ alert("gyroenable=" + gyroenable, " this.gyroflg=" + this.gyroflg);
   }
 
   gyroEventHandler(e) {
-//console.log("gyroEventHandler(e)");
     const beta = e.beta;
     const gamma = e.gamma;
     const absbeta = Math.abs(beta)
@@ -233,7 +218,7 @@ $("#eventdiv8").text("gamemode targetid=" + targetid);
 
   //タイマ部分クリック時の処理
   tapTimerAction(targetid) {
-$("#eventdiv9").text("tapTimerAction(targetid)", targetid);
+$("#eventdiv9").text("tapTimerAction(targetid)" + targetid);
     if (this.timeoutflg) { return; } //タイマ切れ状態のときは何もしない
     const tappos = Number(targetid.slice(-1));
     if (!this.pauseflg && this.clockplayer != tappos) { return; }
