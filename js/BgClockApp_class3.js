@@ -139,25 +139,27 @@ class BgClockApp {
 
   enableCheckGyro() {
 //    let gyroenable = true;
-alert("enableCheckGyro()");
+//alert("enableCheckGyro()");
     if (window.DeviceOrientationEvent) {
-alert("D typeof " + (typeof DeviceOrientationEvent.requestPermission));
-alert("D bool " + !!(DeviceOrientationEvent.requestPermission));
+//alert("D typeof " + (typeof DeviceOrientationEvent.requestPermission));
+//alert("D bool " + !!(DeviceOrientationEvent.requestPermission));
       if (DeviceOrientationEvent.requestPermission) {
         //iPhone OS >13
 //        gyroenable = true;
 //        const yesno = confirm("ジャイロセンサーへのアクセス許可を申請");
         alert("ジャイロセンサーへのアクセス許可を申請");
 //        if (yesno) {
-alert("YES : confirm()");
+//alert("YES : confirm()");
           DeviceOrientationEvent.requestPermission().then((response) => {
             if (response === "granted") {
-alert("response == granted");
+//alert("response == granted");
 //              gyroenable = true;
+              this.gyroflg = true;
               window.addEventListener("deviceorientation", this.gyroEventHandleFunction);
             } else {
-alert("response == NOT granted");
+//alert("response == NOT granted");
               alert("ジャイロセンサーへのアクセスが拒否された");
+              this.gyroflg = false;
               this.gyrochkbox.prop("checked", false);
 //              gyroenable = false;
             }
@@ -168,20 +170,21 @@ alert("response == NOT granted");
 //          gyroenable = false;
 //        }
       } else {
-alert("FALSE : DeviceOrientationEvent.reqestPermission");
+//alert("FALSE : DeviceOrientationEvent.reqestPermission");
         //Android and iPhone OS <12
+        this.gyroflg = true;
         window.addEventListener("deviceorientation", this.gyroEventHandleFunction);
 //         gyroenable = true;
       }
     } else {
       alert("ジャイロセンサーが使用できない"); //PC等
-//      gyroenable = false;
+      this.gyroflg = false;
       this.gyrochkbox.prop("checked", false);
     }
 
     //ジャイロロジックで使う変数を定義・初期化
 //    this.gyroflg = gyroenable;
-    this.gyroflg = this.gyrochkbox.prop("checked");
+//    this.gyroflg = this.gyrochkbox.prop("checked");
     this.last_beta = 1;
     this.lastActionTime = Date.now();
 
@@ -191,7 +194,7 @@ alert("FALSE : DeviceOrientationEvent.reqestPermission");
 //    }
 
 //alert("last_beta=" + this.last_beta + "lastActionTime=" + this.lastActionTime);
-alert(" this.gyroflg=" + this.gyroflg);
+//alert(" this.gyroflg=" + this.gyroflg);
   }
 
   gyroEventHandler(e) {
