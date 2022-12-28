@@ -180,9 +180,10 @@ button{
 .switch{
   position:relative;
   display:inline-block;
-  width:4em;
-  height:2em;
+  width:3em;
+  height:7vh; /* #settingwindow tr に合わせる */
   background-color:var(--slider-bg);
+  margin-right:2em;
 }
 .switch input{
   display:none;
@@ -194,16 +195,16 @@ button{
   right:0;
   bottom:0;
   transition:.3s;
-  border-radius:1.6em; /* Rounded sliders */
+  border-radius:5vh; /* Rounded sliders */
   background-color:var(--slider-fg);
 }
 .slider:before{
   position:absolute;
   content:"";
-  height:1.6em;
-  width:1.6em;
-  left:0.2em;
-  bottom:0.2em;
+  height:5vh;
+  width:5vh; /* 正円にするために height == width とする */
+  left:1vh;
+  bottom:1vh; /* height + bottom * 2 = .switch height となるよう計算 */
   transition:.3s;
   border-radius:50%;
   background-color:var(--slider-btn);
@@ -212,7 +213,7 @@ input:checked + .slider{
   background-color:var(--slider-checked);
 }
 input:checked + .slider:before{
-  transform:translateX(2.0em);
+  transform:translateX(1.2em);
 }
 /* Segmented Control ----------------------------------------- */
 /* (参考) https://ginpen.com/2012/12/11/segmented-control/ */
@@ -322,8 +323,8 @@ input:checked + .slider:before{
   /*appearance:none; /* 選択の下三角を表示しない */
 }
 #settingwindow tr{
-  height:8vh;
-  line-height:8vh;
+  height:7vh;
+  line-height:7vh;
 }
 /* Scorecard Contents decorations ------------------------------------- */
 #matchinfo{
