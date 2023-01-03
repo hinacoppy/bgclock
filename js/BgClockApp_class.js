@@ -64,12 +64,14 @@ class BgClockApp {
     this.applybtn.on("click", () => {
       this.initVariables();
       this.flipcard.showMainPanel();
+      this.settingmode = false;
     });
 
     //設定画面の[CANCEL]ボタンがクリックされたとき
     this.cancelbtn.on("click", () => {
       this.flipcard.showMainPanel();
       this.loadSettingVars(); //transitionが終わってから書き戻す
+      this.settingmode = false;
     });
 
     //メイン画面の[SETTINGS]ボタンがクリックされたとき
@@ -79,6 +81,7 @@ class BgClockApp {
       this.settingwindow.css(topleft);
       this.flipcard.showSettingPanel();
       this.saveSettingVars(); //元の値を覚えておく
+      this.settingmode = true;
     });
 
     //メイン画面の[PAUSE] ボタンがクリックされたとき
@@ -169,6 +172,8 @@ class BgClockApp {
   }
 
   gyroEventHandler(e) {
+    if (this.settingmode) { return; } //設定画面のときは何もしない
+    e.preventDefault();
     const beta = e.beta;
     const gamma = e.gamma; //使ってない
     const absbeta = Math.abs(beta)
@@ -238,6 +243,7 @@ class BgClockApp {
     this.timesettingflg = ($('[name="timesetting"]:checked').val() == "comm"); //T=comm, F=each
     this.clockplayer = 0; //手番をリセット
     this.timeoutflg = false;
+    this.settingmode = false;
     this.flipcard.resetScore();
     this.setClockOption();
   }
