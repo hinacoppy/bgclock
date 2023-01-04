@@ -15,7 +15,7 @@ class BgClockApp {
       this.cv3 = {};
       this.init_canvas();
     }
-    this.initVariables();
+    this.initVariables(true);
     this.settingVars = {}; //設定内容を保持するオブジェクト
     this.gyroEventHandleFunction = (e) => { this.gyroEventHandler(e); } //イベントハンドラ関数を変数化
     $(".analog").toggle(!this.clockmode); //長針表示チェックボックスはアナログ時計のときのみ表示
@@ -43,6 +43,7 @@ class BgClockApp {
   //DOM定義
   setDomNames() {
     this.applybtn = $("#applybtn");
+    this.applywoclkbtn = $("#applywoclkbtn");
     this.cancelbtn = $("#cancelbtn");
     this.settingbtn = $("#settingbtn");
     this.pausebtn = $("#pausebtn");
@@ -62,7 +63,14 @@ class BgClockApp {
   setEventHandler() {
     //設定画面の[APPLY]ボタンがクリックされたとき
     this.applybtn.on("click", () => {
-      this.initVariables();
+      this.initVariables(true);
+      this.flipcard.showMainPanel();
+      this.settingmode = false;
+    });
+
+    //設定画面の[Apply wo Clock]ボタンがクリックされたとき
+    this.applywoclkbtn.on("click", () => {
+      this.initVariables(false);
       this.flipcard.showMainPanel();
       this.settingmode = false;
     });
@@ -174,6 +182,7 @@ class BgClockApp {
   gyroEventHandler(e) {
     if (this.settingmode) { return; } //設定画面のときは何もしない
     e.preventDefault();
+    const alfa = e.alfa; //使ってない
     const beta = e.beta;
     const gamma = e.gamma; //使ってない
     const absbeta = Math.abs(beta)
@@ -235,7 +244,7 @@ class BgClockApp {
   }
 
   //設定画面で設定した内容を反映
-  initVariables() {
+  initVariables(applyflg) {
     this.soundflg = $("[name=sound]").prop("checked");
     this.vibrationflg = $("[name=vibration]").prop("checked");
     this.hourhandflg = $("[name=hourhand]").prop("checked");
@@ -244,8 +253,12 @@ class BgClockApp {
     this.clockplayer = 0; //手番をリセット
     this.timeoutflg = false;
     this.settingmode = false;
-    this.flipcard.resetScore();
-    this.setClockOption();
+    this.delayInit = parseInt(this.seldelay.val());
+    this.flipcard.showMatchInfo();
+    if (applyflg) {
+      this.flipcard.resetScore();
+      this.setClockOption();
+    }
   }
 
   setClockOption() {
@@ -257,7 +270,6 @@ class BgClockApp {
       time2 = Number($("#time2min").val()) * 60 + Number($("#time2sec").val());
     }
     this.clock = [0, time1, time2];
-    this.delayInit = parseInt(this.seldelay.val());
 
     this.dispTimer(1, time1, "pause");
     this.dispTimer(2, time2, "pause");

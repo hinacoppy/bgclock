@@ -126,7 +126,7 @@ button{
   z-index:7; /* .tebanより上に、.pauseinfoより下に */
 }
 .oparationbtn{
-  padding:2vh 6vw;
+  padding:2vh 4vw;
   border:4px solid;
   border-radius:4vw;
   margin-top:1vh;
