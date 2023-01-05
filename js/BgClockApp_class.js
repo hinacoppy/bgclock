@@ -20,6 +20,8 @@ class BgClockApp {
     this.gyroEventHandleFunction = (e) => { this.gyroEventHandler(e); } //イベントハンドラ関数を変数化
     $(".analog").toggle(!this.clockmode); //長針表示チェックボックスはアナログ時計のときのみ表示
     if (BgUtil.isIOS()) { $(".vibration").hide(); } //iOSのときはバイブレーションの設定項目を表示しない
+
+    this.lasttimestamp = 0;
   }
 
   setTimeOptions() {
@@ -313,14 +315,34 @@ class BgClockApp {
     }
   }
 
-  startTimer() {
+  SIstartTimer() {
     const clockspd = 1000;
     this.clockobj = setInterval(() => this.countdownClock(this.clockplayer, clockspd), clockspd);
     //アロー関数で呼び出すことで、コールバック関数内でthisが使える
   }
 
-  stopTimer() {
+  SIstopTimer() {
     clearInterval(this.clockobj);
+  }
+
+  startTimer() {
+    this.clockobj = window.requestAnimationFrame(() => { this.countdownClockWrapper(); });
+  }
+
+  stopTimer() {
+    window.cancelAnimationFrame(this.clockobj);
+  }
+
+  countdownClockWrapper(timestamp) {
+    const clockspd = 1000;
+    if (timestamp === undefined) {
+      this.lasttimestamp = timestamp = performance.now(); //最初に呼ばれたときはリセット
+    }
+    if (timestamp - this.lasttimestamp > clockspd) { //1000ミリ秒以上経過したら、
+      this.countdownClock(this.clockplayer, clockspd); //クロックを動かす
+      this.lasttimestamp += clockspd; //誤差を吸収して次の判断時刻を設定
+    }
+    this.clockobj = window.requestAnimationFrame((timestamp) => { this.countdownClockWrapper(timestamp); });
   }
 
   //クロックをカウントダウン
