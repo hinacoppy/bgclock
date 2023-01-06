@@ -331,14 +331,16 @@ class BgClockApp {
 
   stopTimer() {
     window.cancelAnimationFrame(this.clockobj);
+    this.clockobj = undefined;
   }
 
   countdownClockWrapper(timestamp) {
-    const clockspd = 1000;
+    if (this.clockobj === undefined || this.timeoutflg) { return; } //クロックが止まっているときは何もしない
+    const clockspd = (this.delay <= 0 && this.clock[this.clockplayer] <= 60) ? 100 : 1000;
     if (timestamp === undefined) {
       this.lasttimestamp = timestamp = performance.now(); //最初に呼ばれたときはリセット
     }
-    if (timestamp - this.lasttimestamp > clockspd) { //1000ミリ秒以上経過したら、
+    if (timestamp - this.lasttimestamp > clockspd) { //clockspd以上経過したら、
       this.countdownClock(this.clockplayer, clockspd); //クロックを動かす
       this.lasttimestamp += clockspd; //誤差を吸収して次の判断時刻を設定
     }
@@ -388,7 +390,14 @@ class BgClockApp {
       if (time < 0) { time = 0; }
       const min = Math.trunc(time / 60);
       const sec = Math.trunc(time % 60);
-      const timestr = ("00" + min).slice(-2) + ":" + ("00" + sec).slice(-2);
+      const msec = Math.trunc(time * 10) * 10 % 100; //10msecの桁を0に固定
+      //const msec = Math.trunc(time * 100) % 100; //10msecの桁を動かす場合
+      let timestr;
+      if (time >= 60) {
+        timestr = ("00" + min).slice(-2) + ":" + ("00" + sec).slice(-2);
+      } else {
+        timestr = ("00" + sec).slice(-2) + ":" + ("00" + msec).slice(-2);
+      }
       $("#clock" + player).text(timestr);
     } else {
       this.draw_timerframe(player, time, stat);
