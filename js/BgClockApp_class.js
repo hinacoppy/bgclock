@@ -182,8 +182,8 @@ class BgClockApp {
   }
 
   gyroEventHandler(e) {
-    if (this.settingmode) { return; } //設定画面のときは何もしない
     e.preventDefault();
+    if (this.settingmode) { return; } //設定画面のときは何もしない
     const alfa = e.alfa; //使ってない
     const beta = e.beta;
     const gamma = e.gamma; //使ってない
@@ -191,7 +191,7 @@ class BgClockApp {
     if (3 < absbeta && absbeta < 8) { //傾きが既定の範囲内で、
       if (this.last_beta * beta < 0) { //水平を超えて傾けられたとき(前回と今回の角度の符号が逆)
         this.last_beta = beta;
-        if (this.pauseflg) { //ポーズのときは短時間(500ms)でフリックすることで、ポーズ解除とする
+        if (this.pauseflg) { //ポーズのときは短時間(<500ms)でフリックすることで、ポーズ解除とする
           if (Date.now() - this.lastActionTime < 500) {
             const targetid = (beta < 0) ? "clock1" : "clock2";
             this.tapTimerAction(targetid);
@@ -315,58 +315,54 @@ class BgClockApp {
     }
   }
 
-  SIstartTimer() {
-    const clockspd = 1000;
-    this.clockobj = setInterval(() => this.countdownClock(this.clockplayer, clockspd), clockspd);
-    //アロー関数で呼び出すことで、コールバック関数内でthisが使える
-  }
-
-  SIstopTimer() {
-    clearInterval(this.clockobj);
-  }
-
   startTimer() {
-    this.clockobj = window.requestAnimationFrame(() => { this.countdownClockWrapper(); });
+    this.clockobj = window.requestAnimationFrame(() => { this.countdownClock(); });
   }
 
   stopTimer() {
     window.cancelAnimationFrame(this.clockobj);
-    this.clockobj = undefined;
+    this.clockobj = undefined; //不要だが分かりやすさのために残しておく
   }
 
-  countdownClockWrapper(timestamp) {
-    if (this.clockobj === undefined || this.timeoutflg) { return; } //クロックが止まっているときは何もしない
-    const clockspd = (this.delay <= 0 && this.clock[this.clockplayer] <= 60) ? 100 : 1000;
+  //クロックをFrame Ratio(約16msec)でカウントダウン
+  countdownClock(timestamp) {
+    if (this.clockobj === undefined) { return; } //クロックが止まっているときは何もしない
+
     if (timestamp === undefined) {
       this.lasttimestamp = timestamp = performance.now(); //最初に呼ばれたときはリセット
     }
-    if (timestamp - this.lasttimestamp > clockspd) { //clockspd以上経過したら、
-      this.countdownClock(this.clockplayer, clockspd); //クロックを動かす
-      this.lasttimestamp += clockspd; //誤差を吸収して次の判断時刻を設定
-    }
-    this.clockobj = window.requestAnimationFrame((timestamp) => { this.countdownClockWrapper(timestamp); });
-  }
 
-  //クロックをカウントダウン
-  countdownClock(player, clockspd) {
-    if (this.delay > 0) {
-      //保障時間内
-      this.delay -= clockspd / 1000;
-      this.dispDelay(player, this.delay);
-    } else {
-      //保障時間切れ後
+    const player = this.clockplayer;
+    if (this.delay > 0) { //保障時間内
+      const clockspd = 1000; //delayの更新間隔は1000msec
+      if (timestamp - this.lasttimestamp > clockspd) { //clockspd以上経過したら、
+        this.delay -= 1;
+        this.dispDelay(player, this.delay);
+        this.lasttimestamp += clockspd; //誤差を吸収して次の判断時刻を設定
+      }
+    } else { //保障時間切れ後
       $("#delay" + player).hide();
-      this.clock[player] -= clockspd / 1000;
-      this.dispTimer(player, this.clock[player], "teban");
-      if (this.clock[player] <= 0) {
-        this.timeupLose(player); //切れ負け処理
+      const elapsed = timestamp - this.lasttimestamp;
+      this.lasttimestamp = timestamp;
+
+      this.clock[player] -= elapsed / 1000; //手番側の持ち時間を経過時間分減
+      const clocktime = this.clock[player];
+      const clockspd = (clocktime > 60) ? 1000 : 100; //残60秒を切ったら 0.1秒毎に表示を更新
+      const clockmod = (clocktime * 1000) % clockspd;
+      if (clockmod - elapsed < 0) { //次が桁下がりのときに表示
+        this.dispTimer(player, clocktime, "teban");
+        if (clocktime <= 0) {
+          this.stopTimer();
+          this.timeupLose(player); //切れ負け処理
+          return; //次のrequestAnimationFrame()を実行させない
+        }
       }
     }
+    this.clockobj = window.requestAnimationFrame((timestamp) => { this.countdownClock(timestamp); });
   }
 
   //切れ負け処理
   timeupLose(player) {
-    this.stopTimer();
     this.timeoutflg = true;
     this.pause_in(); //ポーズ状態に遷移
     if (this.clockmode) {
