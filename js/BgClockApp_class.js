@@ -20,8 +20,6 @@ class BgClockApp {
     this.gyroEventHandleFunction = (e) => { this.gyroEventHandler(e); } //イベントハンドラ関数を変数化
     $(".analog").toggle(!this.clockmode); //長針表示チェックボックスはアナログ時計のときのみ表示
     if (BgUtil.isIOS()) { $(".vibration").hide(); } //iOSのときはバイブレーションの設定項目を表示しない
-
-    this.lasttimestamp = 0;
   }
 
   setTimeOptions() {
@@ -153,8 +151,8 @@ class BgClockApp {
   enableCheckGyro() {
     if (window.DeviceOrientationEvent) {
       if (DeviceOrientationEvent.requestPermission) {
-        //iPhone OS >13
-        alert("ジャイロセンサーへのアクセス許可を申請");
+        //iPhone OS >= 13
+        alert("ジャイロセンサーへのアクセス許可を申請"); //このalert()は冗長かもしれない
         DeviceOrientationEvent.requestPermission().then((response) => {
           if (response === "granted") {
             this.gyroflg = true;
@@ -166,7 +164,7 @@ class BgClockApp {
           }
         });
       } else {
-        //Android and iPhone OS <12
+        //Android or iPhone OS <= 12
         this.gyroflg = true;
         window.addEventListener("deviceorientation", this.gyroEventHandleFunction);
       }
@@ -192,11 +190,12 @@ class BgClockApp {
       if (this.last_beta * beta < 0) { //水平を超えて傾けられたとき(前回と今回の角度の符号が逆)
         this.last_beta = beta;
         if (this.pauseflg) { //ポーズのときは短時間(<500ms)でフリックすることで、ポーズ解除とする
-          if (Date.now() - this.lastActionTime < 500) {
+          const now = Date.now();
+          if (now - this.lastActionTime < 500) {
             const targetid = (beta < 0) ? "clock1" : "clock2";
             this.tapTimerAction(targetid);
           } else {
-            this.lastActionTime = Date.now();
+            this.lastActionTime = now;
           }
         } else { //ポーズじゃないときは
           //スマホを左に傾けたとき(beta < 0)は、左側のクロックをタップしたことにする
@@ -261,6 +260,7 @@ class BgClockApp {
       this.flipcard.resetScore();
       this.setClockOption();
     }
+    this.lasttimestamp = 0;
   }
 
   setClockOption() {
@@ -316,17 +316,17 @@ class BgClockApp {
   }
 
   startTimer() {
-    this.clockobj = window.requestAnimationFrame(() => { this.countdownClock(); });
+    this.frameID = window.requestAnimationFrame(() => { this.countdownClock(); });
   }
 
   stopTimer() {
-    window.cancelAnimationFrame(this.clockobj);
-    this.clockobj = undefined; //不要だが分かりやすさのために残しておく
+    window.cancelAnimationFrame(this.frameID);
+    this.frameID = undefined; //不要だが分かりやすさのために残しておく
   }
 
   //クロックをFrame Ratio(約16msec)でカウントダウン
   countdownClock(timestamp) {
-    if (this.clockobj === undefined) { return; } //クロックが止まっているときは何もしない
+    if (this.frameID === undefined) { return; } //クロックが止まっているときは何もしない
 
     if (timestamp === undefined) {
       this.lasttimestamp = timestamp = performance.now(); //最初に呼ばれたときはリセット
@@ -334,11 +334,11 @@ class BgClockApp {
 
     const player = this.clockplayer;
     if (this.delay > 0) { //保障時間内
-      const clockspd = 1000; //delayの更新間隔は1000msec
-      if (timestamp - this.lasttimestamp > clockspd) { //clockspd以上経過したら、
+      const delaystep = 1000; //delayの更新間隔は1000msec
+      if (timestamp - this.lasttimestamp > delaystep) { //delaystep以上経過したら、
         this.delay -= 1;
         this.dispDelay(player, this.delay);
-        this.lasttimestamp += clockspd; //誤差を吸収して次の判断時刻を設定
+        this.lasttimestamp += delaystep; //誤差を吸収して次の判断時刻を設定
       }
     } else { //保障時間切れ後
       $("#delay" + player).hide();
@@ -347,8 +347,8 @@ class BgClockApp {
 
       this.clock[player] -= elapsed / 1000; //手番側の持ち時間を経過時間分減
       const clocktime = this.clock[player];
-      const clockspd = (clocktime > 60) ? 1000 : 100; //残60秒を切ったら 0.1秒毎に表示を更新
-      const clockmod = (clocktime * 1000) % clockspd;
+      const clockstep = (clocktime > 60) ? 1000 : 100; //残60秒を切ったら 0.1秒毎に表示を更新
+      const clockmod = (clocktime * 1000) % clockstep;
       if (clockmod - elapsed < 0) { //次が桁下がりのときに表示
         this.dispTimer(player, clocktime, "teban");
         if (clocktime <= 0) {
@@ -358,7 +358,7 @@ class BgClockApp {
         }
       }
     }
-    this.clockobj = window.requestAnimationFrame((timestamp) => { this.countdownClock(timestamp); });
+    this.frameID = window.requestAnimationFrame((timestamp) => { this.countdownClock(timestamp); });
   }
 
   //切れ負け処理
@@ -375,7 +375,7 @@ class BgClockApp {
 
   dispDelay(player, delay) {
     if (this.clockmode) {
-      $("#delay" + player).text(Math.trunc(delay));
+      $("#delay" + player).text(delay);
     } else {
       this.draw_delayframe(this.delayInit, delay);
     }
@@ -386,12 +386,12 @@ class BgClockApp {
       if (time < 0) { time = 0; }
       const min = Math.trunc(time / 60);
       const sec = Math.trunc(time % 60);
-      const msec = Math.trunc(time * 10) * 10 % 100; //10msecの桁を0に固定
-      //const msec = Math.trunc(time * 100) % 100; //10msecの桁を動かす場合
       let timestr;
       if (time >= 60) {
         timestr = ("00" + min).slice(-2) + ":" + ("00" + sec).slice(-2);
       } else {
+        const msec = Math.trunc(time * 10) * 10 % 100; //10msecの桁を0に固定
+        //const msec = Math.trunc(time * 100) % 100; //10msecの桁を動かす場合
         timestr = ("00" + sec).slice(-2) + ":" + ("00" + msec).slice(-2);
       }
       $("#clock" + player).text(timestr);
