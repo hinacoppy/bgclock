@@ -8,6 +8,7 @@ class BgClockApp {
     this.setTimeOptions();
     this.setDomNames();
     this.setEventHandler();
+    this.setSwipeEventHandler();
     this.themecolor = this.setThemeColor("cool");
     if (!this.clockmode) {
       this.cv1 = {}; //canvasで使うための状態を保持するオブジェクト
@@ -47,7 +48,6 @@ class BgClockApp {
     this.cancelbtn = $("#cancelbtn");
     this.settingbtn = $("#settingbtn");
     this.pausebtn = $("#pausebtn");
-    this.scorecard = $("#score1, #score2");
     this.settingwindow = $("#settingwindow");
     this.clockarea = this.clockmode ? $("#clock1, #clock2") : $("#clock1cv, #clock2cv");
     this.pauseinfo = $("#pauseinfo")
@@ -56,7 +56,7 @@ class BgClockApp {
     this.seldelay = $("#delaytime");
     this.theme = $("#theme");
     this.timesetting = $("#timesetting");
-    this.gyrochkbox = $("#gyro");
+    this.gyrochkbox = document.querySelector("#gyro");
   }
 
   //イベントハンドラの定義
@@ -85,8 +85,6 @@ class BgClockApp {
     //メイン画面の[SETTINGS]ボタンがクリックされたとき
     this.settingbtn.on("click", () => {
       if (!this.pauseflg) { return; } //ポーズ時でなければ何もしない
-      const topleft = this.winposition(this.settingwindow);
-      this.settingwindow.css(topleft);
       this.flipcard.showSettingPanel();
       this.saveSettingVars(); //元の値を覚えておく
       this.settingmode = true;
@@ -95,12 +93,6 @@ class BgClockApp {
     //メイン画面の[PAUSE] ボタンがクリックされたとき
     this.pausebtn.on("click", () => {
       this.pauseAction();
-    });
-
-    //スコアカードがスワイプあるいはタップされたとき→1枚めくる
-    this.scorecard.on("swiperight swipeleft tap", (e) => {
-      if (!this.pauseflg) { return; } //スコアカードがめくれるのはポーズ時のみ
-      this.flipcard.driveEvent(e);
     });
 
     //クロックの場所がクリック(タップ)されたとき
@@ -138,14 +130,30 @@ class BgClockApp {
     });
 
     //ジャイロモードのスイッチが変更されたとき
-    this.gyrochkbox.on("change", () => {
-      this.gyroflg = this.gyrochkbox.prop("checked");
+    this.gyrochkbox.addEventListener("change", () => {
+      this.gyroflg = this.gyrochkbox.checked;
       if (this.gyroflg) {
         this.enableCheckGyro();
       } else {
         window.removeEventListener("deviceorientation", this.gyroEventHandleFunction);
       }
     });
+  }
+
+  setSwipeEventHandler() {
+    this.score1 = document.querySelector("#score1");
+    this.score2 = document.querySelector("#score2");
+
+    //swipeイベントを登録
+    new SwipeTracker(this.score1, "tl", 100); //tapかswipeleftのみを見張る。(rudはtapとみなす)
+    new SwipeTracker(this.score2, "tl", 100);
+
+    //スコアカードがスワイプあるいはタップされたとき→1枚めくる。スコアカードがめくれるのはポーズ時のみ
+    const eventlist = ["tap", "swipeleft"];
+    for (const eventtype of eventlist) {
+      this.score1.addEventListener(eventtype, (evt) => { if (this.pauseflg) { this.flipcard.driveEvent(evt); }});
+      this.score2.addEventListener(eventtype, (evt) => { if (this.pauseflg) { this.flipcard.driveEvent(evt); }});
+    }
   }
 
   enableCheckGyro() {
@@ -160,7 +168,7 @@ class BgClockApp {
           } else {
             alert("ジャイロセンサーへのアクセスが拒否された");
             this.gyroflg = false;
-            this.gyrochkbox.prop("checked", false);
+            this.gyrochkbox.checked = false;
           }
         });
       } else {
@@ -171,7 +179,7 @@ class BgClockApp {
     } else {
       alert("ジャイロセンサーが使用できない"); //PC等
       this.gyroflg = false;
-      this.gyrochkbox.prop("checked", false);
+      this.gyrochkbox.checked = false;
     }
 
     //ジャイロロジックで使う変数を定義・初期化
@@ -384,12 +392,13 @@ class BgClockApp {
   dispTimer(player, time, stat) {
     if (this.clockmode) {
       if (time < 0) { time = 0; }
-      const min = Math.trunc(time / 60);
-      const sec = Math.trunc(time % 60);
       let timestr;
       if (time >= 60) {
+        const min = Math.trunc(time / 60);
+        const sec = Math.trunc(time % 60);
         timestr = ("00" + min).slice(-2) + ":" + ("00" + sec).slice(-2);
       } else {
+        const sec = Math.trunc(time % 60);
         const msec = Math.trunc(time * 10) * 10 % 100; //10msecの桁を0に固定
         //const msec = Math.trunc(time * 100) % 100; //10msecの桁を動かす場合
         timestr = ("00" + sec).slice(-2) + ":" + ("00" + msec).slice(-2);
@@ -408,9 +417,10 @@ class BgClockApp {
     return time;
   }
 
+//以下の行はjQueryコード削除済
+
   writeAllotedtime() {
-    const clockminutes = this.get_allowtimemin();
-    $("#allotedtime").text(clockminutes);
+    document.querySelector("#allotedtime").textContent = this.get_allowtimemin()
   }
 
   //音とバイブレーション
@@ -422,8 +432,7 @@ class BgClockApp {
   //音を鳴らす
   sound(type) {
     if (this.soundflg) {
-      const audio = $("#" + type).get(0); //音の種類は引数で指定
-      //audio.load(); //連続再生に対応
+      const audio = document.getElementById(type); //音の種類は引数で指定
       audio.play();
     }
   }
@@ -434,15 +443,6 @@ class BgClockApp {
       const vibrationdata = {tap: 50, pause: [50, 50, 100], buzzer: 1000};
       window.navigator.vibrate(vibrationdata[type]);
     }
-  }
-
-  //画面中央に表示するための左上座標を計算
-  winposition(winobj) {
-    let wx = $(document).scrollLeft() + ($(window).width() - winobj.outerWidth()) / 2;
-    if (wx < 0) { wx = 0; }
-    let wy = $(document).scrollTop() + ($(window).height() - winobj.outerHeight()) / 2;
-    if (wy < 0) { wy = 0; }
-    return {top:wy, left:wx};
   }
 
   //windowリサイズ時にアナログ時計を描き直す
@@ -471,12 +471,12 @@ class BgClockApp {
     this.cv2.ctx = this.cv2.canvas.getContext("2d");
     this.cv3.canvas = document.getElementById("delaycv");
     this.cv3.ctx = this.cv3.canvas.getContext("2d");
-    this.cv1.width  = $("#clock1").width();
-    this.cv1.height = $("#clock1").height();
-    this.cv2.width  = $("#clock2").width();
-    this.cv2.height = $("#clock2").height();
-    this.cv3.width  = $("#delay").width();
-    this.cv3.height = $("#delay").height();
+    this.cv1.width  = document.getElementById("clock1").clientWidth;
+    this.cv1.height = document.getElementById("clock1").clientHeight;
+    this.cv2.width  = document.getElementById("clock2").clientWidth;
+    this.cv2.height = document.getElementById("clock2").clientHeight;
+    this.cv3.width  = document.getElementById("delay").clientWidth;
+    this.cv3.height = document.getElementById("delay").clientHeight;
   }
 
   //タイマーを表示
@@ -638,35 +638,49 @@ class BgClockApp {
   }
 
   saveSettingVars() {
-    this.settingVars.matchlength = $("#matchlength").val();
-    this.settingVars.selminpoint = $("#selminpoint").val();
-    this.settingVars.delaytime   = $("#delaytime").val();
-    this.settingVars.sound       = $("[name=sound]").prop("checked");
-    this.settingVars.vibration   = $("[name=vibration]").prop("checked");
-    this.settingVars.hourhand    = $("[name=hourhand]").prop("checked");
-    this.settingVars.time1min    = $("#time1min").val();
-    this.settingVars.time1sec    = $("#time1sec").val();
-    this.settingVars.time2min    = $("#time2min").val();
-    this.settingVars.time2sec    = $("#time2sec").val();
+    this.settingVars.matchlength = document.querySelector("#matchlength").value;
+    this.settingVars.selminpoint = document.querySelector("#selminpoint").value;
+    this.settingVars.delaytime   = document.querySelector("#delaytime").value;
+    this.settingVars.sound       = document.querySelector("#sound").checked;
+    this.settingVars.vibration   = document.querySelector("#vibration").checked;
+    this.settingVars.hourhand    = document.querySelector("#hourhand").checked;
+    this.settingVars.time1min    = document.querySelector("#time1min").value;
+    this.settingVars.time1sec    = document.querySelector("#time1sec").value;
+    this.settingVars.time2min    = document.querySelector("#time2min").value;
+    this.settingVars.time2sec    = document.querySelector("#time2sec").value;
+    this.settingVars.timesetting = this.getTimesettingIndex();
   }
 
   loadSettingVars() {
-    $("#matchlength")    .val(this.settingVars.matchlength);
-    $("#selminpoint")    .val(this.settingVars.selminpoint);
-    $("#delaytime")      .val(this.settingVars.delaytime);
-    $("[name=sound]")    .prop("checked", this.settingVars.sound);
-    $("[name=vibration]").prop("checked", this.settingVars.vibration);
-    $("[name=hourhand]") .prop("checked", this.settingVars.hourhand);
-    $("#allotedtime")    .text(this.get_allowtimemin());
-    $("#time1min")       .val(this.settingVars.time1min);
-    $("#time1sec")       .val(this.settingVars.time1sec);
-    $("#time2min")       .val(this.settingVars.time2min);
-    $("#time2sec")       .val(this.settingVars.time2sec);
+    document.querySelector("#matchlength").value = this.settingVars.matchlength;
+    document.querySelector("#selminpoint").value = this.settingVars.selminpoint;
+    document.querySelector("#delaytime").value   = this.settingVars.delaytime;
+    document.querySelector("#sound").checked     = this.settingVars.sound;
+    document.querySelector("#vibration").checked = this.settingVars.vibration;
+    document.querySelector("#hourhand").checked  = this.settingVars.hourhand;
+    document.querySelector("#time1min").value    = this.settingVars.time1min;
+    document.querySelector("#time1sec").value    = this.settingVars.time1sec;
+    document.querySelector("#time2min").value    = this.settingVars.time2min;
+    document.querySelector("#time2sec").value    = this.settingVars.time2sec;
+    document.querySelector("#allotedtime").textContent = this.get_allowtimemin();
+    document.getElementsByName("timesetting")[this.settingVars.timesetting].checked = true;
+    document.querySelector("#timesetting").dispatchEvent(new Event("change")); //changeイベントを発火し表示を戻す
+  }
+
+  getTimesettingIndex() {
+    const elemlist = document.getElementsByName("timesetting");
+    for (let idx = 0; idx < elemlist.length; idx++) {
+      if (elemlist[idx].checked) {
+        return idx;
+      }
+    }
   }
 
   //テーマカラーを変更
   changeTheme(theme) {
-    $("body").removeClass("warm cool mono").addClass(theme);
+    const body = document.querySelector("body");
+    body.classList.remove("warm", "cool", "mono");
+    body.classList.add(theme);
     if (this.clockmode) { return; } //以下の処理はanalog時のみ
 
     this.themecolor = this.setThemeColor(theme);
