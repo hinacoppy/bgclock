@@ -17,6 +17,10 @@ body{
   height:100%;
   font-family:'Arial', 'Meiryo UI';
   background-color:var(--body-bg-color);
+  /* 子要素を水平・垂直方向の中央揃え */
+  display:flex;
+  justify-content:center;
+  align-items:center;
 }
 @font-face{
   /* https://www.keshikan.net/fonts.html */
