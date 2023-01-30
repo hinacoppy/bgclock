@@ -1,7 +1,7 @@
 /* serviceWorker.js */
 'use strict';
 
-const CACHE_NAME = "bgclock-v20230123";
+const CACHE_NAME = "bgclock-v20230130";
 const ORIGIN = (location.hostname == 'localhost') ? '' : location.protocol + '//' + location.hostname;
 
 const STATIC_FILES = [
