@@ -145,11 +145,12 @@ class BgClockApp {
     this.score2 = document.querySelector("#score2");
 
     //swipeイベントを登録
-    new SwipeTracker(this.score1, "tl", 50); //tapかswipeleftのみを見張る。(rudはtapとみなす)
-    new SwipeTracker(this.score2, "tl", 50);
+    const thres = Math.max(window.innerHeight, window.innerWidth) / 20;
+    new SwipeTracker(this.score1, "tld", thres); //tapかswipeleft, swipedownを見張る。(ruはtapとみなす)
+    new SwipeTracker(this.score2, "tld", thres);
 
     //スコアカードがスワイプあるいはタップされたとき→1枚めくる。スコアカードがめくれるのはポーズ時のみ
-    const eventlist = ["mytap", "swipeleft"];
+    const eventlist = ["mytap", "swipeleft", "swipedown"];
     for (const eventtype of eventlist) {
       this.score1.addEventListener(eventtype, (evt) => { if (this.pauseflg) { this.flipcard.driveEvent(evt); }});
       this.score2.addEventListener(eventtype, (evt) => { if (this.pauseflg) { this.flipcard.driveEvent(evt); }});
