@@ -1,10 +1,11 @@
 /* serviceWorker.js */
+// (ŽQl) https://developer.mozilla.org/ja/docs/Web/Progressive_web_apps/Offline_Service_workers
 'use strict';
 
-const CACHE_NAME = "bgclock-v20230130";
+const cacheName = 'bgclock-v20230210';
 const ORIGIN = (location.hostname == 'localhost') ? '' : location.protocol + '//' + location.hostname;
 
-const STATIC_FILES = [
+const contentToCache = [
   ORIGIN + '/bgclock/',
   ORIGIN + '/bgclock/index.html',
   ORIGIN + '/bgclock/digital.html',
@@ -34,43 +35,35 @@ const STATIC_FILES = [
   ORIGIN + '/js/start-serviceWorker.js'
 ];
 
-const CACHE_KEYS = [
-  CACHE_NAME
-];
-
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return Promise.all(
-        STATIC_FILES.map(url => {
-          return fetch(new Request(url, { cache: 'no-cache', mode: 'no-cors' })).then(response => {
-            return cache.put(url, response);
-          });
-        })
-      );
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(cacheName).then((cache) => {
+      return cache.addAll(contentToCache);
     })
   );
 });
-
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
+self.addEventListener('fetch', (e) => {
+  e.respondWith(
+    caches.match(e.request).then((r) => {
+      return r || fetch(e.request).then((response) => {
+        return caches.open(cacheName).then((cache) => {
+          cache.put(e.request, response.clone());
+          return response;
+        });
+      });
     })
   );
 });
-
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys.filter(key => {
-          return !CACHE_KEYS.includes(key);
-        }).map(key => {
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keyList) => {
+      return Promise.all(keyList.map((key) => {
+        const [kyappname, kyversion] = key.split('-');
+        const [cnappname, cnversion] = cacheName.split('-');
+        if (kyappname === cnappname && kyversion !== cnversion) {
           return caches.delete(key);
-        })
-      );
+        }
+      }));
     })
   );
 });
-
