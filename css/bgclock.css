@@ -171,6 +171,7 @@ button{
   background-color:var(--clock-bg-color);
 }
 .teban_pause{
+  z-index:3; /* スコアカードより上に */
 }
 .digital .teban_pause{
   font-size:14vw;
