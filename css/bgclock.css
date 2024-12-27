@@ -1,26 +1,25 @@
 /* document outline ----------------------------------------- */
-/* Designed by hinacoppy 2018 - 2022                          */
+/* Designed by (C)hinacoppy 2018 -- 2024                      */
 
 /* document outline ----------------------------------------- */
 *{
   user-select:none; /* タップ、ドラッグで文字選択しないように */
 }
+input,select{
+  font-size:100%;
+}
 html{
-  height:100%;
+  height:100vmin;
   overflow:hidden;
-  overscroll-behavior:none; /* バウンススクロールを抑止(only for Android) */
+  overscroll-behavior:none; /* バウンススクロールを抑止 */
 }
 body{
   margin:0;
   padding:0;
-  min-height:100%;
-  height:100%;
+  min-height:100vmin;
+  height:100vmin;
   font-family:'Arial', 'Meiryo UI';
   background-color:var(--body-bg-color);
-  /* 子要素を水平・垂直方向の中央揃え */
-  display:flex;
-  justify-content:center;
-  align-items:center;
 }
 @font-face{
   /* https://www.keshikan.net/fonts.html */
@@ -37,19 +36,34 @@ button{
 div{
   position:relative;
 }
+.article{
+  /* 子要素(設定画面)を水平・垂直方向の中央揃え */
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+@media screen and (orientation:portrait) {
+.article{ /* 縦画面の時は横向きに表示し、横画面にするよう促す */
+  width:100vh;
+  height:100vw;
+  margin:-100vw 0 100vh;
+  transform:rotate(90deg);
+  transform-origin:left bottom;
+}}
+
 /* Grid Layout settings ------------------------------------- */
-/* 以下すべて相対サイズにし、レスポンシブ対応可能にしておく */
+/* 横画面基準の相対サイズにし、レスポンシブ対応可能にしておく */
 #mainwindow{
   display:grid; /* Grid Layout でコンテンツを配置 */
-  grid-template-columns:50vw 50vw;
-  grid-template-rows:30vh 58vh 9vh; /* ボタン下に隙間を空けるため、敢えて100vhにしない */
+  grid-template-columns:50vmax 50vmax;
+  grid-template-rows:30vmin 58vmin 9vmin; /* ボタン下に隙間を空けるため、敢えて100vminにしない */
   grid-template-areas:
      'score1 score2'
      'clock1 clock2'
      'pausebtn settingbtn';
   align-items:center; /* 子アイテムはデフォで上下左右に中央揃え */
   justify-items:center;
-  padding-top:1vh;
+  padding-top:1vmin;
 }
 #score1{
   grid-area:score1;
@@ -104,41 +118,41 @@ div{
 }
 .analog #settingbtn{
   justify-self:right;
-  margin-right:2vw;
+  margin-right:2vmax;
 }
 /* object decorations ------------------------------------- */
 .digital .clock{
   font-family:'DSEG7-Classic', 'Arial Black', 'Meiryo UI';
-  margin:2vh 1vw;
-  padding:5vh 0;
+  margin:2vmin 1vmax;
+  padding:5vmin 0;
 }
 .analog .clock{
   display:flex; /* canvasを中央寄せ */
   align-items:center;
   justify-content:center;
-  width:50vw;
-  height:58vh; /* grid-template-rowsに合わせる */
+  width:50vmax;
+  height:58vmin; /* grid-template-rowsに合わせる */
 }
 .digital .delay{
-  font-size:10vw;
+  font-size:10vmax;
   background-color:rgba( 192, 192, 192, 0.7 );
-  width:15vw;
+  width:15vmax;
   text-align:center;
   z-index:7; /* .tebanより上に */
   pointer-events:none; /* タップイベントを無効化(下に透過) */
 }
 .analog .delay{
-  width:20vh; /* 正円で表示 */
-  height:20vh;
+  width:20vmin; /* 正円で表示 */
+  height:20vmin;
   z-index:7; /* .tebanより上に、.pauseinfoより下に */
 }
 .oparationbtn{
-  padding:2vh 4vw;
+  padding:2vmin 4vmax;
   border:4px solid;
-  border-radius:4vw;
-  margin-top:1vh;
+  border-radius:4vmax;
+  margin-top:1vmin;
   display:inline-block;
-  font-size:2vw;
+  font-size:2vmax;
 }
 .btnenable{
   background-color:var(--btn-enable);
@@ -151,11 +165,11 @@ div{
   color:var(--btn-frame-disable);
 }
 .pauseinfo{
-  font-size:8vw;
+  font-size:8vmax;
   z-index:10;
-  padding:1vh 2vw;
+  padding:1vmin 2vmax;
   border:5px solid;
-  border-radius:3vw;
+  border-radius:3vmax;
   background-color:var(--pause-bg-color);
   background-color:rgba( 128, 128, 128, 0.70 );
   color:var(--pause-fg-color);
@@ -164,20 +178,20 @@ div{
   z-index:5;
 }
 .digital .teban{
-  font-size:18vw;
+  font-size:18vmax;
   background-color:var(--clock-fg-color);
 }
 .noteban{
 }
 .digital .noteban{
-  font-size:10vw;
+  font-size:10vmax;
   background-color:var(--clock-bg-color);
 }
 .teban_pause{
   z-index:3; /* スコアカードより上に */
 }
 .digital .teban_pause{
-  font-size:14vw;
+  font-size:14vmax;
   background-color:var(--clock-bg-color);
 }
 .timeupLose{
@@ -189,7 +203,7 @@ div{
   position:relative;
   display:inline-block;
   width:3em;
-  height:7vh; /* #settingwindow tr に合わせる */
+  height:7vmin; /* #settingwindow tr に合わせる */
   background-color:var(--slider-bg);
   margin-right:2em;
 }
@@ -203,16 +217,16 @@ div{
   right:0;
   bottom:0;
   transition:.3s;
-  border-radius:5vh; /* Rounded sliders */
+  border-radius:5vmin; /* Rounded sliders */
   background-color:var(--slider-fg);
 }
 .slider:before{
   position:absolute;
   content:"";
-  height:5vh;
-  width:5vh; /* 正円にするために height == width とする */
-  left:1vh;
-  bottom:1vh; /* height + bottom * 2 = .switch height となるよう計算 */
+  height:5vmin;
+  width:5vmin; /* 正円にするために height == width とする */
+  left:1vmin;
+  bottom:1vmin; /* height + bottom * 2 = .switch height となるよう計算 */
   transition:.3s;
   border-radius:50%;
   background-color:var(--slider-btn);
@@ -233,7 +247,7 @@ input:checked + .slider:before{
   float:left;
   padding:0em 0.5em;
   text-align:center;
-  width:12vw;
+  width:12vmax;
   background-color:var(--segmented-disable-bg);
   border-color:var(--segmented-frame);
   color:var(--segmented-disable-fg);
@@ -248,17 +262,17 @@ input:checked + .slider:before{
 /* Flip Card styles ------------------------------------- */
 .cardcontainer{
   position:relative;
-  width:18vw;
-  height:28vh;
+  width:18vmax;
+  height:28vmin;
 }
 .card{
   position:absolute;
-  width:18vw;
-  height:28vh;
-  line-height:28vh;
+  width:18vmax;
+  height:28vmin;
+  line-height:28vmin;
   border-radius:20px;
   text-align:center;
-  font-size:10vw;
+  font-size:10vmax;
   transform-style:preserve-3d;
   background-color:var(--score-bg-color);
 }
@@ -310,44 +324,46 @@ input:checked + .slider:before{
 /* Setting Window decorations ------------------------------------- */
 #settingwindow{
   position:absolute;
+  top:0;
+  margin-top:5vmin;
   background-color:var(--setting-bg-color);
   border:3px solid var(--setting-frame);
-  font-size:2vw;
-  padding:5vh 5vw;
+  font-size:2vmax;
+  padding:5vmin 5vmax;
   display:none;
 }
 .settingtitle{
-  font-size:2.2vw;
-  padding:2vh 2vw;
-  margin-bottom:2vh;
+  font-size:2.2vmax;
+  padding:2vmin 2vmax;
+  margin-bottom:2vmin;
   color:var(--segmented-enable-fg);
   background-color:var(--segmented-enable-bg);
 }
 #settingwindow select{
   font-size:100%;
-  padding:0 0.3vw;
-  margin:0 1vw;
+  padding:0 0.3vmax;
+  margin:0 1vmax;
   text-align:center;
   /*appearance:none; /* 選択の下三角を表示しない */
 }
 #settingwindow tr{
-  height:7vh;
-  line-height:7vh;
+  height:7vmin;
+  line-height:7vmin;
 }
 /* Scorecard Contents decorations ------------------------------------- */
 #matchinfo{
-  width:10vw;
-  height:15vh;
-  line-height:15vh;
+  width:10vmax;
+  height:15vmin;
+  line-height:15vmin;
   text-align:center;
-  font-size:5vw;
+  font-size:5vmax;
   border-radius:20px;
   background-color:var(--match-bg-color);
 }
 #crawfordinfo{
-  font-size:3vw;
+  font-size:3vmax;
   text-align:center;
-  padding-top:15vh; /* matchinfoを避けて表示 */
+  padding-top:15vmin; /* matchinfoを避けて表示 */
 }
 /* Theme Color Definition ------------------------------------- */
 .cool{
