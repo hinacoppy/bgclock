@@ -5,18 +5,20 @@ class BgClockApp {
   constructor(clockmode = true) {
     this.clockmode = clockmode;　//digital(T)/analog(F)
     this.flipcard = new FlipCard();
-    this.setTimeOptions();
+    this.flipcard.resetScore();
+    this.setTimeOptions(); //個別時間設定の<select>の<option>を設定
     this.setDomNames();
     this.setEventHandler();
     this.setSwipeEventHandler();
     this.themecolor = this.setThemeColor("cool");
+    this.initVariables(false); //設定画面の設定を変数に取り込む。クロックの初期化はsvgの設定後
     if (!this.clockmode) {
-      this.cv1 = {}; //canvasで使うための状態を保持するオブジェクト
-      this.cv2 = {};
-      this.cv3 = {};
-      this.init_canvas();
+      this.svg1 = {}; //SVGで使うための状態を保持するオブジェクト
+      this.svg2 = {};
+      this.svg3 = {};
+      this.init_svg_object();
     }
-    this.initVariables(true);
+    this.setClockOption(); //クロックを初期化
     this.settingVars = {}; //設定内容を保持するオブジェクト
     this.gyroEventHandleFunction = (e) => { this.gyroEventHandler(e); } //イベントハンドラ関数を変数化
     $(".analog").toggle(!this.clockmode); //長針表示チェックボックスはアナログ時計のときのみ表示
@@ -49,7 +51,7 @@ class BgClockApp {
     this.settingbtn = $("#settingbtn");
     this.pausebtn = $("#pausebtn");
     this.settingwindow = $("#settingwindow");
-    this.clockarea = this.clockmode ? $("#clock1, #clock2") : $("#clock1cv, #clock2cv");
+    this.clockarea = this.clockmode ? $("#clock1, #clock2") : $("#clock1svg, #clock2svg");
     this.pauseinfo = $("#pauseinfo")
     this.matchlength = $("#matchlength");
     this.selminpoint = $("#selminpoint");
@@ -354,8 +356,8 @@ class BgClockApp {
       const elapsed = timestamp - this.lasttimestamp;
       this.lasttimestamp = timestamp;
 
-      this.clock[player] -= elapsed / 1000; //手番側の持ち時間を経過時間分減
-      const clocktime = this.clock[player];
+      const clocktime = this.clock[player] - elapsed / 1000; //手番側の持ち時間を経過時間分減
+      this.clock[player] = Math.max(clocktime, 0); //持ち時間はマイナスにはしない
       const clockstep = (clocktime > 60) ? 1000 : 100; //残60秒を切ったら 0.1秒毎に表示を更新
       const clockmod = (clocktime * 1000) % clockstep;
       if (clockmod - elapsed < 0) { //次が桁下がりのときに表示
@@ -449,9 +451,8 @@ class BgClockApp {
   //windowリサイズ時にアナログ時計を描き直す
   redraw() {
     if (this.clockmode) { return; } //以下の処理はanalogの時のみ
-    this.init_canvas();
+    //this.init_svg_object();
     //return; //時計再描画は次回描画時に
-
     if (this.pauseflg) {
       this.draw_timerframe(1, this.clock[1], "pause");
       this.draw_timerframe(2, this.clock[2], "pause");
@@ -464,178 +465,228 @@ class BgClockApp {
     this.draw_delayframe(this.delayInit, this.delay);
   }
 
-  //canvasオブジェクト初期化
-  init_canvas() {
-    this.cv1.canvas = document.getElementById("clock1cv");
-    this.cv1.ctx = this.cv1.canvas.getContext("2d");
-    this.cv2.canvas = document.getElementById("clock2cv");
-    this.cv2.ctx = this.cv2.canvas.getContext("2d");
-    this.cv3.canvas = document.getElementById("delaycv");
-    this.cv3.ctx = this.cv3.canvas.getContext("2d");
-    this.cv1.width  = document.getElementById("clock1").clientWidth;
-    this.cv1.height = document.getElementById("clock1").clientHeight;
-    this.cv2.width  = document.getElementById("clock2").clientWidth;
-    this.cv2.height = document.getElementById("clock2").clientHeight;
-    this.cv3.width  = document.getElementById("delay").clientWidth;
-    this.cv3.height = document.getElementById("delay").clientHeight;
+  //SVGオブジェクト初期化
+  init_svg_object() {
+    this.init_svg_clock(this.svg1, "clock1svg");
+    this.init_svg_clock(this.svg2, "clock2svg");
+    this.init_svg_delay(this.svg3, "delaysvg");
+  }
+
+  init_svg_clock(svgobj, domid) {
+    svgobj.svg = document.getElementById(domid);
+    svgobj.svg.innerHTML = "";
+    svgobj.svg.setAttribute("viewBox", `-500 -500 1000 1000`);
+    svgobj.svg.setAttribute("width", "30vw");
+    svgobj.container = this.createGroupRotate90(svgobj.svg, 'conntainer');
+    svgobj.container.setAttribute("fill", this.themecolor.back_pause);
+    this.createClockSotowaku(svgobj.container, -500, -500, 1000, 1000, this.themecolor.clock_border);
+    this.createClockMemori(svgobj.container);
+    svgobj.Tanshin = this.createTanshin(svgobj.container);
+    svgobj.Choshin = this.createChoshin(svgobj.container);
+    svgobj.Byoshin = this.createByoshin(svgobj.container);
+    this.createCap(svgobj.container);
+
+    const visibility = this.hourhandflg ? "visible" : "hidden"; //短針の表示/非表示
+    svgobj.Tanshin.setAttribute("visibility", visibility);
+  }
+
+  init_svg_delay(svgobj, domid) {
+    svgobj.svg = document.getElementById(domid);
+    svgobj.svg.innerHTML = "";
+    svgobj.svg.setAttribute("viewBox", `-100 -100 200 200`);
+    svgobj.svg.setAttribute("width", "15vw");
+
+    //外周と消費時間の塗りつぶし
+    const radius = 97;
+    const borderwidth = 5;
+    const d = "M 0 0 h 95 a 95 95 0 0 1 0 0 z"; //初期状態の扇型
+    const g = this.createGroupRotate90(svgobj.svg, 'delay');
+    this.createDelayCircle(g, 0, 0, radius, this.themecolor.delay_remain, this.themecolor.delay_border, borderwidth);
+    svgobj.Path = this.createDelayOogigata(g, d, this.themecolor.delay_used);
   }
 
   //タイマーを表示
   draw_timerframe(player, timer, stat) {
-    const cv = player == 1 ? this.cv1 : player == 2 ? this.cv2 : undefined;
-    const s0 = Math.min(cv.width, cv.height); //小さいほう
-    let s, backcolor;
+    const svgobj = player == 1 ? this.svg1 : player == 2 ? this.svg2 : undefined;
+
+    let backcolor, width;
     switch(stat) {
       case "pause":
-        s = s0 * 1.0;
+        width = "30vw";
         backcolor = this.themecolor.back_pause;
         break;
       case "teban":
-        s = s0 * 1.2; //手番のときはクロックを大きく表示
+        width = "36vw";
         backcolor = this.themecolor.back_teban;
         break;
       case "noteban":
-        s = s0 * 0.9;
+        width = "27vw";
         backcolor = this.themecolor.back_noteban;
         break;
       default:
+        width = "30vw";
         backcolor = this.themecolor.back_alert;
     }
-
-    const ctx = cv.ctx;
-    const w = cv.canvas.width = s;
-    const h = cv.canvas.height = s;
-    const r = s/2; //半径
-    const center = {x : r, y : r}; //中心
-    const lh = r * 0.70; //時針長さ
-    const lm = r * 0.80; //分針長さ
-    const ls = r * 0.90; //秒針長さ
-    const lr = r * 0.20; //針の後ろの長さ
-
-    //背景
-    ctx.fillStyle = backcolor;
-    ctx.fillRect(0, 0, w, h);
-
-    //外枠
-    ctx.strokeStyle = this.themecolor.clock_border;
-    ctx.lineWidth = 5;
-    ctx.strokeRect(0, 0, w - 1, h - 1);
-
-    //描画開始位置を中心に移動
-    ctx.translate(center.x, center.y);
-
-    //分目盛
-    ctx.save();
-    ctx.strokeStyle = this.themecolor.dots_min;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-      for (let i = 0; i < 60; i++){
-        ctx.moveTo(r, 0);
-        ctx.lineTo(r - 10, 0);
-        ctx.rotate(Math.PI / 30);
-      }
-    ctx.stroke();
-
-    //時目盛(5分毎)
-    ctx.strokeStyle = this.themecolor.dots_hour;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-      for (let i = 0; i < 12; i++){
-        ctx.moveTo(r, 0);
-        ctx.lineTo(r - 20, 0);
-        ctx.rotate(Math.PI / 6);
-      }
-    ctx.stroke();
-    ctx.restore();
+    svgobj.svg.setAttribute("width", width); //サイズと色を変える
+    svgobj.container.setAttribute("fill", backcolor);
 
     //針の設定
-    //60ではなく、59.999にすることで、0秒、0分のとき0度になるようにする
-    const sec = 59.9999 - (timer % 60);
-    const min = Math.floor(59.9999 - ((timer % 3600) / 60));
-    const hr = Math.floor(11.9999 - (timer / 3600));
-
-    //時針(短針)
-    if (this.hourhandflg) { //trueのとき表示、falseのとき非表示
-      ctx.save();
-      ctx.rotate((Math.PI / 6) * hr + (Math.PI / 360) * min + (Math.PI / 21600) * sec);
-      ctx.lineWidth = 8;
-      ctx.strokeStyle = this.themecolor.hour_hand;
-      ctx.beginPath();
-      ctx.moveTo(-3, lr);
-      ctx.lineTo(0, -lh);
-      ctx.lineTo(3, lr);
-      ctx.stroke();
-      ctx.restore();
-    } // if (hourhandflg)
-
-    //分針(長針)
-    ctx.save();
-    ctx.rotate((Math.PI / 30) * min + (Math.PI / 1800) * sec);
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = this.themecolor.min_hand;
-    ctx.beginPath();
-    ctx.moveTo(-2, lr);
-    ctx.lineTo(0, -lm);
-    ctx.lineTo(2, lr);
-    ctx.stroke();
-    ctx.restore();
-
-    //秒針
-    ctx.save();
-    ctx.rotate(sec * Math.PI / 30);
-    ctx.strokeStyle = this.themecolor.sec_hand;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(0, lr);
-    ctx.lineTo(0, -ls);
-    //ctx.lineTo(0, lr); //分針時針と同じコードにするが、無駄なのでコメントアウト
-    ctx.stroke();
-    ctx.restore();
-
-    //時計の中心の丸
-    ctx.save();
-    ctx.beginPath();
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = this.themecolor.center_stroke;
-    ctx.fillStyle   = this.themecolor.center_fill;
-    ctx.arc(0, 0, 7, 0, Math.PI * 2, true);
-    ctx.stroke();
-    ctx.fill();
-    ctx.restore();
+    const [hh, mm, ss, ms] = this.parse_timer(timer); //timerを時分秒に分解
+    const hhdegree = 360 - (30 * (hh + (1/60) * mm)); //角度計算
+    const mmdegree = 360 - (6 * (mm + (1/60) * ss));
+    const ssdegree = 360 - (6 * (ss + (timer < 60 ? ms : 0))); //残60秒以下のときはミリ秒まで表示
+    svgobj.Tanshin.setAttribute("transform", `rotate(${hhdegree})`);
+    svgobj.Choshin.setAttribute("transform", `rotate(${mmdegree})`);
+    svgobj.Byoshin.setAttribute("transform", `rotate(${ssdegree})`);
   }
 
   //delayを表示
   draw_delayframe(delaytime, remain) {
-    const cv = this.cv3;
-    const ctx = cv.ctx;
-    const w = cv.canvas.width = cv.width;
-    const h = cv.canvas.height = cv.height;
-    const r = (w > h ? h/2 : w/2); //半径は縦横の短いほうを選択
-
-    ctx.clearRect(0, 0, w, h);
-
-    //残delay時間
-    const angle = 360 * ((delaytime - remain) / delaytime);
-
+    if (delaytime == 0) { return; }
     //だんだん小さくなる円弧を描画
-    ctx.beginPath();
-    ctx.arc(w/2, h/2, r-1, (angle - 90) * Math.PI / 180, (360 - 90) * Math.PI / 180, false);
-    ctx.lineTo(w/2, h/2);
-    ctx.fillStyle = this.themecolor.delay_remain;
-    ctx.fill();
-    //だんだんおおきくなる円弧を描画
-    ctx.beginPath();
-    ctx.arc(w/2, h/2, r - 1, (angle - 90) * Math.PI / 180, (0 - 90) * Math.PI / 180, true);
-    ctx.lineTo(w/2, h/2);
-    ctx.fillStyle = this.themecolor.delay_used;
-    ctx.fill();
+    const angle = 360 * ((delaytime - remain) / delaytime); //残delay時間
+    const r = 95;
+    const dx = r * (this.cos(angle) - 1); //1 = Math.cos(0);
+    const dy = r * (this.sin(angle) - 0); //0 = Math.sin(0);
+    const xar = 0; //x-axis-rotation
+    const laf = (angle > 180) ? 1 : 0; //large-arc-flag
+    const sf = 1; //sweep-flag
+    const d = `M 0 0 h ${r} a ${r} ${r} ${xar} ${laf} ${sf} ${dx} ${dy} z`;
+    this.svg3.Path.setAttribute("d", d);
+  }
 
-    //外周
-    ctx.beginPath();
-    ctx.arc(w / 2, h / 2, r - 3, 0, Math.PI * 2, false); //外側divで削られないよう半径を調整
-    ctx.strokeStyle = this.themecolor.delay_border;
-    ctx.lineWidth = 5;
-    ctx.stroke();
+  parse_timer(timer) {
+    let work = timer;
+    const ms = work % 1;
+    work = Math.floor(work);
+    const ss = work % 60;
+    work = Math.floor(work / 60);
+    const mm = work % 60;
+    work = Math.floor(work / 60);
+    const hh = work;
+    return [hh, mm, ss, ms];
+  }
+
+  sin(degree) {
+    return Math.sin(degree * (Math.PI / 180)); //radian = degree * (2π / 360)
+  }
+
+  cos(degree) {
+    return Math.cos(degree * (Math.PI / 180));
+  }
+
+  createGroupRotate90(svg, className) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("class", className);
+    g.setAttribute("transform", "rotate(-90)");
+    svg.appendChild(g);
+    return g;
+  }
+
+  createTanshin(svg) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("class", "tanshin");
+    g.setAttribute("transform", "rotate(0)");
+    const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    const points = "350,10 350,-10 -80,-15 -80,15";
+    polygon.setAttribute("points", points);
+    polygon.setAttribute("fill", this.themecolor.hour_hand);
+    g.appendChild(polygon);
+    svg.appendChild(g);
+    return g;
+  }
+
+  createChoshin(svg) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("class", "choshin");
+    g.setAttribute("transform", "rotate(0)");
+    const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    const points = "420,5 420,-5 -80,-8 -80,8";
+    polygon.setAttribute("points", points);
+    polygon.setAttribute("fill", this.themecolor.min_hand);
+    g.appendChild(polygon);
+    svg.appendChild(g);
+    return g;
+  }
+
+  createByoshin(svg) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("class", "byoshin");
+    g.setAttribute("transform", "rotate(0)");
+    const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    const points = "470,3 470,-3 -80,-3 -80,3";
+    polygon.setAttribute("points", points);
+    polygon.setAttribute("fill", this.themecolor.sec_hand);
+    g.appendChild(polygon);
+    svg.appendChild(g);
+    return g;
+  }
+
+  createCap(svg) {
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("class", "cap");
+    circle.setAttribute("cx", 0);
+    circle.setAttribute("cy", 0);
+    circle.setAttribute("r", 30);
+    circle.setAttribute("fill", this.themecolor.center_fill);
+    svg.appendChild(circle);
+  }
+
+  createClockMemori(svg) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("class", "memori");
+    for (let m = 0; m < 60; m++) {
+      const color = (m % 5 == 0) ? this.themecolor.dots_hour : this.themecolor.dots_min;
+      const length = (m % 5 == 0) ? 40 : 20;
+      const width = (m % 5 == 0) ? 10 : 7;
+      const degree = m * 6;
+      const r1 = 500;
+      const r2 = r1 - length;
+      const x1 = r1 * this.sin(degree);
+      const x2 = r2 * this.sin(degree);
+      const y1 = r1 * this.cos(degree);
+      const y2 = r2 * this.cos(degree);
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", x1);
+      line.setAttribute("y1", y1);
+      line.setAttribute("x2", x2);
+      line.setAttribute("y2", y2);
+      line.setAttribute("stroke", color);
+      line.setAttribute("stroke-width", width);
+      g.appendChild(line);
+    }
+    svg.appendChild(g);
+  }
+
+  createClockSotowaku(svg, x, y, width, height, border) {
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("class", "sotowaku");
+    rect.setAttribute("x", x);
+    rect.setAttribute("y", y);
+    rect.setAttribute("width", width);
+    rect.setAttribute("height", height);
+    rect.setAttribute("stroke", border); // 縁取りの色
+    rect.setAttribute("stroke-width", 10); // 縁取りの幅
+    svg.appendChild(rect);
+  }
+
+  createDelayCircle(svg, cx, cy, r, fill, border, width) {
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("cx", cx);
+    circle.setAttribute("cy", cy);
+    circle.setAttribute("r", r);
+    circle.setAttribute("fill", fill);
+    circle.setAttribute("stroke", border); // 縁取りの色
+    circle.setAttribute("stroke-width", width); // 縁取りの幅
+    svg.appendChild(circle);
+  }
+
+  createDelayOogigata(svg, d, fill) {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", d);
+    path.setAttribute("fill", fill);
+    svg.appendChild(path);
+    return path;
   }
 
   saveSettingVars() {
@@ -685,7 +736,8 @@ class BgClockApp {
     if (this.clockmode) { return; } //以下の処理はanalog時のみ
 
     this.themecolor = this.setThemeColor(theme);
-    //テーマに合わせてcanvasオブジェクトを再描画
+    //テーマに合わせてSVGオブジェクトを再描画
+    this.init_svg_object();
     this.draw_timerframe(1, this.clock[1], "pause");
     this.draw_timerframe(2, this.clock[2], "pause");
     this.draw_delayframe(this.delayInit, this.delay);
