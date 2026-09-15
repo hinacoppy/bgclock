@@ -21,71 +21,75 @@ class BgClockApp {
     this.setClockOption(); //クロックを初期化
     this.settingVars = {}; //設定内容を保持するオブジェクト
     this.gyroEventHandleFunction = (e) => { this.gyroEventHandler(e); } //イベントハンドラ関数を変数化
-    $(".analog").toggle(!this.clockmode); //長針表示チェックボックスはアナログ時計のときのみ表示
-    if (BgUtil.isIOS()) { $(".vibration").hide(); } //iOSのときはバイブレーションの設定項目を表示しない
+    document.querySelectorAll(".analog").forEach((el) => { el.style.display = this.clockmode ? "none" : ""; }); //長針表示チェックボックスはアナログ時計のときのみ表示
+    if (BgUtil.isIOS()) { document.querySelectorAll(".vibration").forEach((el) => { el.style.display = "none"; }); } //iOSのときはバイブレーションの設定項目を表示しない
   }
 
   setTimeOptions() {
-    $(".each").hide(); //最初は個別モードは非表示
+    document.querySelectorAll(".each").forEach((el) => { el.style.display = "none"; }); //最初は個別モードは非表示
 
     let mopt = "";
     for (let m = 0; m < 100; m++) {
       const selected = (m == 10) ? " selected" : "";
       mopt += "<option value='" + m + "'" + selected + ">" + ("00" + m).slice(-2) + "</option>";
     }
-    $("#time1min, #time2min").append(mopt);
+    document.querySelectorAll("#time1min, #time2min").forEach((el) => { el.insertAdjacentHTML("beforeend", mopt); });
 
     let sopt = "";
     for (let s = 0; s < 60; s++) {
       const selected = (s == 0) ? " selected" : "";
       sopt += "<option value='" + s + "'" + selected + ">" + ("00" + s).slice(-2) + "</option>";
     }
-    $("#time1sec, #time2sec").append(sopt);
+    document.querySelectorAll("#time1sec, #time2sec").forEach((el) => { el.insertAdjacentHTML("beforeend", sopt); });
   }
 
   //DOM定義
   setDomNames() {
-    this.applybtn = $("#applybtn");
-    this.applywoclkbtn = $("#applywoclkbtn");
-    this.cancelbtn = $("#cancelbtn");
-    this.settingbtn = $("#settingbtn");
-    this.pausebtn = $("#pausebtn");
-    this.settingwindow = $("#settingwindow");
-    this.clockarea = this.clockmode ? $("#clock1, #clock2") : $("#clock1svg, #clock2svg");
-    this.pauseinfo = $("#pauseinfo")
-    this.matchlength = $("#matchlength");
-    this.selminpoint = $("#selminpoint");
-    this.seldelay = $("#delaytime");
-    this.theme = $("#theme");
-    this.timesetting = $("#timesetting");
-    this.gyrochkbox = document.querySelector("#gyro");
+    this.applybtn      = document.querySelector("#applybtn");
+    this.applywoclkbtn = document.querySelector("#applywoclkbtn");
+    //this.cancelbtn     = document.querySelector("#cancelbtn");
+    this.settingbtn    = document.querySelector("#settingbtn");
+    this.pausebtn      = document.querySelector("#pausebtn");
+    this.settingwindow = document.querySelector("#settingwindow");
+    this.clockarea = this.clockmode
+      ? [document.querySelector("#clock1"), document.querySelector("#clock2")]
+      : [document.querySelector("#clock1svg"), document.querySelector("#clock2svg")];
+    this.pauseinfo     = document.querySelector("#pauseinfo");
+    this.matchlength   = document.querySelector("#matchlength");
+    this.selminpoint   = document.querySelector("#selminpoint");
+    this.seldelay      = document.querySelector("#delaytime");
+    this.theme         = document.querySelector("#theme");
+    this.timesetting   = document.querySelector("#timesetting");
+    this.gyrochkbox    = document.querySelector("#gyro");
   }
 
   //イベントハンドラの定義
   setEventHandler() {
     //設定画面の[APPLY]ボタンがクリックされたとき
-    this.applybtn.on("click", () => {
+    this.applybtn.addEventListener("click", () => {
       this.initVariables(true);
       this.flipcard.showMainPanel();
       this.settingmode = false;
     });
 
     //設定画面の[Apply wo Clock]ボタンがクリックされたとき
-    this.applywoclkbtn.on("click", () => {
+    this.applywoclkbtn.addEventListener("click", () => {
       this.initVariables(false);
       this.flipcard.showMainPanel();
       this.settingmode = false;
     });
 
-    //設定画面の[CANCEL]ボタンがクリックされたとき
-    this.cancelbtn.on("click", () => {
+    /*****************************************************
+    //設定画面の[CANCEL]ボタンがクリックされたとき(HTML側でコメントアウトされ現在は存在しない)
+    this.cancelbtn.addEventListener("click", () => {
       this.flipcard.showMainPanel();
       this.loadSettingVars(); //transitionが終わってから書き戻す
       this.settingmode = false;
     });
+    *****************************************************/
 
     //メイン画面の[SETTINGS]ボタンがクリックされたとき
-    this.settingbtn.on("click", () => {
+    this.settingbtn.addEventListener("click", () => {
       if (!this.pauseflg) { return; } //ポーズ時でなければ何もしない
       this.flipcard.showSettingPanel();
       this.saveSettingVars(); //元の値を覚えておく
@@ -93,12 +97,12 @@ class BgClockApp {
     });
 
     //メイン画面の[PAUSE] ボタンがクリックされたとき
-    this.pausebtn.on("click", () => {
+    this.pausebtn.addEventListener("click", () => {
       this.pauseAction();
     });
 
     //クロックの場所がクリック(タップ)されたとき
-    this.clockarea.on("touchstart mousedown", (e) => {
+    const onClockPointerDown = (e) => {
       e.preventDefault(); // touchstart以降のイベントを発生させない
       if (this.gyroflg) { //ジャイロモードのときはポーズボタンの機能
         this.pause_in();
@@ -107,28 +111,32 @@ class BgClockApp {
       }
       const targetid = this.clockmode ? e.currentTarget.id : e.currentTarget.parentElement.id;
       this.tapTimerAction(targetid);
+    };
+    this.clockarea.forEach((el) => {
+      el.addEventListener("touchstart", onClockPointerDown);
+      el.addEventListener("mousedown", onClockPointerDown);
     });
 
     //テーマが変更されたとき
-    this.theme.on("change", () => {
-      const theme = $("[name=theme]:checked").val();
+    this.theme.addEventListener("change", () => {
+      const theme = document.querySelector('[name="theme"]:checked').value;
       this.changeTheme(theme);
     });
 
     //マッチ情報が変更されたとき
-    this.matchlength.on("change", () => { this.writeAllotedtime(); });
-    this.selminpoint.on("change", () => { this.writeAllotedtime(); });
+    this.matchlength.addEventListener("change", () => { this.writeAllotedtime(); });
+    this.selminpoint.addEventListener("change", () => { this.writeAllotedtime(); });
 
     //画面サイズが変更されたとき
-    $(window).on("resize", () => {
+    window.addEventListener("resize", () => {
       this.redraw();
     });
 
     //クロック設定モード情報が変更されたとき
-    this.timesetting.on("change", () => {
-      this.timesettingflg = ($('[name="timesetting"]:checked').val() == "comm");
-      $(".comm").toggle( this.timesettingflg);
-      $(".each").toggle(!this.timesettingflg);
+    this.timesetting.addEventListener("change", () => {
+      this.timesettingflg = (document.querySelector('[name="timesetting"]:checked').value == "comm");
+      document.querySelectorAll(".comm").forEach((el) => { el.style.display = this.timesettingflg ? "" : "none"; });
+      document.querySelectorAll(".each").forEach((el) => { el.style.display = this.timesettingflg ? "none" : ""; });
     });
 
     //ジャイロモードのスイッチが変更されたとき
@@ -234,8 +242,8 @@ class BgClockApp {
 
     this.dispDelay(player, this.delay);
     if (this.clockmode) {
-      $("#delay" + player).show();
-      $("#delay" + oppo).hide();
+      document.querySelector("#delay" + player).style.display = "";
+      document.querySelector("#delay" + oppo).style.display = "none";
     }
 
     this.pause_out();
@@ -257,15 +265,15 @@ class BgClockApp {
 
   //設定画面で設定した内容を反映
   initVariables(applyflg) {
-    this.soundflg = $("[name=sound]").prop("checked");
-    this.vibrationflg = $("[name=vibration]").prop("checked");
-    this.hourhandflg = $("[name=hourhand]").prop("checked");
+    this.soundflg = document.querySelector('[name="sound"]').checked;
+    this.vibrationflg = document.querySelector('[name="vibration"]').checked;
+    this.hourhandflg = document.querySelector('[name="hourhand"]').checked;
     this.pauseflg = true; //pause状態で起動する
-    this.timesettingflg = ($('[name="timesetting"]:checked').val() == "comm"); //T=comm, F=each
+    this.timesettingflg = (document.querySelector('[name="timesetting"]:checked').value == "comm"); //T=comm, F=each
     this.clockplayer = 0; //手番をリセット
     this.timeoutflg = false;
     this.settingmode = false;
-    this.delayInit = parseInt(this.seldelay.val());
+    this.delayInit = parseInt(this.seldelay.value);
     this.flipcard.showMatchInfo();
     if (applyflg) {
       this.flipcard.resetScore();
@@ -279,47 +287,52 @@ class BgClockApp {
     if (this.timesettingflg) {
       time1 = time2 = 60 * this.get_allowtimemin(); //設定時間 = ポイント数 x 時間(分) x 60(秒)
     } else {
-      time1 = Number($("#time1min").val()) * 60 + Number($("#time1sec").val());
-      time2 = Number($("#time2min").val()) * 60 + Number($("#time2sec").val());
+      time1 = Number(document.querySelector("#time1min").value) * 60 + Number(document.querySelector("#time1sec").value);
+      time2 = Number(document.querySelector("#time2min").value) * 60 + Number(document.querySelector("#time2sec").value);
     }
     this.clock = [0, time1, time2];
 
     this.dispTimer(1, time1, "pause");
     this.dispTimer(2, time2, "pause");
     if (this.clockmode) {
-      $(".delay").hide();
-      $(".clock").removeClass("timeupLose");
+      document.querySelectorAll(".delay").forEach((el) => { el.style.display = "none"; });
+      document.querySelectorAll(".clock").forEach((el) => { el.classList.remove("timeupLose"); });
     } else {
       this.dispDelay(null, this.delayInit);
-      this.pauseinfo.text("PAUSE").removeClass("timeupLose");
+      this.pauseinfo.textContent = "PAUSE";
+      this.pauseinfo.classList.remove("timeupLose");
     }
   }
 
   //PLAY -> PAUSE
   pause_in() {
     this.pauseflg = true;
-    this.settingbtn.removeClass("btndisable"); //ボタンクリックを有効化
-    this.pauseinfo.show();
+    this.settingbtn.classList.remove("btndisable"); //ボタンクリックを有効化
+    this.pauseinfo.style.display = "";
     if (this.clockmode) {
-      this.pauseinfo.show();
-      this.clockarea.removeClass("teban noteban").addClass("teban_pause"); //クロックを無手番に
+      this.pauseinfo.style.display = "";
+      this.clockarea.forEach((el) => { el.classList.remove("teban", "noteban"); el.classList.add("teban_pause"); }); //クロックを無手番に
     } else {
-      this.pauseinfo.text("PAUSE");
+      this.pauseinfo.textContent = "PAUSE";
       this.draw_timerframe(1, this.clock[1], "pause"); //クロックをPAUSE状態で表示
       this.draw_timerframe(2, this.clock[2], "pause");
-      $("#clock1, #clock2").removeClass("teban noteban").addClass("teban_pause");
+      document.querySelectorAll("#clock1, #clock2").forEach((el) => { el.classList.remove("teban", "noteban"); el.classList.add("teban_pause"); });
     }
   }
 
   //PAUSE -> PLAY
   pause_out() {
     this.pauseflg = false;
-    this.pauseinfo.hide();
-    this.settingbtn.addClass("btndisable"); //ボタンクリックを無効化
+    this.pauseinfo.style.display = "none";
+    this.settingbtn.classList.add("btndisable"); //ボタンクリックを無効化
     const player = this.clockplayer;
     const oppo = BgUtil.getBdOppo(player); //手番じゃないほう
-    $("#clock" + player).removeClass("noteban teban_pause").addClass("teban");
-    $("#clock" + oppo).removeClass("teban teban_pause").addClass("noteban");
+    const clockPlayerEl = document.querySelector("#clock" + player);
+    clockPlayerEl.classList.remove("noteban", "teban_pause");
+    clockPlayerEl.classList.add("teban");
+    const clockOppoEl = document.querySelector("#clock" + oppo);
+    clockOppoEl.classList.remove("teban", "teban_pause");
+    clockOppoEl.classList.add("noteban");
     if (!this.clockmode) {
       this.draw_timerframe(player, this.clock[player], "teban");
       this.draw_timerframe(oppo, this.clock[oppo], "noteban");
@@ -352,7 +365,9 @@ class BgClockApp {
         this.lasttimestamp += delaystep; //誤差を吸収して次の判断時刻を設定
       }
     } else { //保障時間切れ後
-      $("#delay" + player).hide();
+      if (this.clockmode) { //ディレイを消すのはデジタルのときだけ
+        document.querySelector("#delay" + player).style.display = "none";
+      }
       const elapsed = timestamp - this.lasttimestamp;
       this.lasttimestamp = timestamp;
 
@@ -377,16 +392,19 @@ class BgClockApp {
     this.timeoutflg = true;
     this.pause_in(); //ポーズ状態に遷移
     if (this.clockmode) {
-      $("#clock" + player).text("LOSE").addClass("timeupLose");
+      const clockEl = document.querySelector("#clock" + player);
+      clockEl.textContent = "LOSE";
+      clockEl.classList.add("timeupLose");
     } else {
-      this.pauseinfo.text("TIMEUP LOSE").addClass("timeupLose");
+      this.pauseinfo.textContent = "TIMEUP LOSE";
+      this.pauseinfo.classList.add("timeupLose");
     }
     this.sound_vibration("buzzer");
   }
 
   dispDelay(player, delay) {
     if (this.clockmode) {
-      $("#delay" + player).text(delay);
+      document.querySelector("#delay" + player).textContent = delay;
     } else {
       this.draw_delayframe(this.delayInit, delay);
     }
@@ -406,15 +424,15 @@ class BgClockApp {
         //const msec = Math.trunc(time * 100) % 100; //10msecの桁を動かす場合
         timestr = ("00" + sec).slice(-2) + ":" + ("00" + msec).slice(-2);
       }
-      $("#clock" + player).text(timestr);
+      document.querySelector("#clock" + player).textContent = timestr;
     } else {
       this.draw_timerframe(player, time, stat);
     }
   }
 
   get_allowtimemin() {
-    const matchlength = parseInt(this.matchlength.val());
-    const selminpoint = parseFloat(this.selminpoint.val());
+    const matchlength = parseInt(this.matchlength.value);
+    const selminpoint = parseFloat(this.selminpoint.value);
     const maxmin = this.clockmode ? 100 : 720; //analogの最大値は720分(12時間)
     const time = (matchlength == 0) ? maxmin : Math.ceil(matchlength * selminpoint);
     return time;

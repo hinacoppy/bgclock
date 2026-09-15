@@ -2,7 +2,7 @@
 // (参考) https://developer.mozilla.org/ja/docs/Web/Progressive_web_apps/Offline_Service_workers
 'use strict';
 
-const cacheName = 'bgclock-v20260906';
+const cacheName = 'bgclock-v20260915';
 const ORIGIN = (location.hostname == 'localhost') ? '' : location.protocol + '//' + location.hostname;
 
 const contentToCache = [
@@ -31,7 +31,6 @@ const contentToCache = [
   ORIGIN + '/bgscoreapp/js/bgflipcard_class.js',
   ORIGIN + '/bgscoreapp/js/swipetracker_class.js',
   ORIGIN + '/js/BgUtil_class.js',
-  ORIGIN + '/js/jquery-3.7.1.min.js',
 ];
 
 self.addEventListener('install', (e) => {

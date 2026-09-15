@@ -142,8 +142,8 @@ div{
   pointer-events:none; /* タップイベントを無効化(下に透過) */
 }
 .analog .delay{
-  width:20vmin; /* 正円で表示 */
-  height:20vmin;
+/*  width:20vmin; /* 正円で表示 */
+/*  height:20vmin;*/
   z-index:7; /* .tebanより上に、.pauseinfoより下に */
 }
 .oparationbtn{
