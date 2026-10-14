@@ -2,8 +2,8 @@
 // (参考) https://developer.mozilla.org/ja/docs/Web/Progressive_web_apps/Offline_Service_workers
 'use strict';
 
-const cacheName = 'bgclock-v20260915';
-const ORIGIN = (location.hostname == 'localhost') ? '' : location.protocol + '//' + location.hostname;
+const cacheName = 'bgclock-v20261014';
+const ORIGIN = location.origin; //ポート番号を含むorigin(LAN内IP:ポートなどでも動作させる)
 
 const contentToCache = [
   ORIGIN + '/bgclock/',
@@ -28,8 +28,13 @@ const contentToCache = [
   ORIGIN + '/bgclock/sounds/decision7.mp3',
   ORIGIN + '/bgclock/sounds/warning2.mp3',
   ORIGIN + '/bgclock/webfonts/DSEG7Classic-BoldItalic.woff',
-  ORIGIN + '/bgscoreapp/js/bgflipcard_class.js',
-  ORIGIN + '/bgscoreapp/js/swipetracker_class.js',
+  ORIGIN + '/bgScoreAppSvg/js/SevenSegment_class.js',
+  ORIGIN + '/bgScoreAppSvg/js/RectanglePolygon_class.js',
+  ORIGIN + '/bgScoreAppSvg/js/DotMatrix_class.js',
+  ORIGIN + '/bgScoreAppSvg/js/FlipFont_class.js',
+  ORIGIN + '/bgScoreAppSvg/js/Odometer_class.js',
+  ORIGIN + '/bgScoreAppSvg/js/Handwritten_class.js',
+  ORIGIN + '/bgScoreAppSvg/js/bgScoreAppSvg_class.js',
   ORIGIN + '/js/BgUtil_class.js',
 ];
 
@@ -45,13 +50,14 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.match(e.request).then((r) => {
       return r || fetch(e.request).then((response) => {
-        return caches.open(cacheName).then((cache) => {
-          if (e.request.url.startsWith('http')) { //ignore chrome-extention: request (refuse error msg)
-            cache.put(e.request, response.clone());
-          }
-          return response;
-        });
-      });
+        //正常応答(200番台)かつhttp(s)のGETだけキャッシュする
+        //(404/500のキャッシュ固定化や、chrome-extension: 等のエラーを防ぐ)
+        if (response.ok && e.request.method === 'GET' && e.request.url.startsWith('http')) {
+          const copy = response.clone();
+          caches.open(cacheName).then((cache) => cache.put(e.request, copy));
+        }
+        return response;
+      }).catch(() => Response.error()); //オフラインで未キャッシュの場合は通常のネットワークエラーとして扱う
     })
   );
 });

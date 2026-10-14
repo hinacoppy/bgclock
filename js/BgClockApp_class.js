@@ -4,12 +4,13 @@
 class BgClockApp {
   constructor(clockmode = true) {
     this.clockmode = clockmode;　//digital(T)/analog(F)
-    this.flipcard = new FlipCard();
-    this.flipcard.resetScore();
+    const scorefont = this.loadScoreFont(); //localStrageから取り出す
+    this.setScoreCardRadio(scorefont); //ラジオボタンを変更
+    this.scoreAppObj = new bgScoreAppSvg(scorefont, false);
+    this.scoreAppObj.resetScore();
     this.setTimeOptions(); //個別時間設定の<select>の<option>を設定
     this.setDomNames();
     this.setEventHandler();
-    this.setSwipeEventHandler();
     this.themecolor = this.setThemeColor("cool");
     this.initVariables(false); //設定画面の設定を変数に取り込む。クロックの初期化はsvgの設定後
     if (!this.clockmode) {
@@ -47,13 +48,12 @@ class BgClockApp {
   setDomNames() {
     this.applybtn      = document.querySelector("#applybtn");
     this.applywoclkbtn = document.querySelector("#applywoclkbtn");
-    //this.cancelbtn     = document.querySelector("#cancelbtn");
+    this.cancelbtn     = document.querySelector("#cancelbtn");
     this.settingbtn    = document.querySelector("#settingbtn");
     this.pausebtn      = document.querySelector("#pausebtn");
     this.settingwindow = document.querySelector("#settingwindow");
-    this.clockarea = this.clockmode
-      ? [document.querySelector("#clock1"), document.querySelector("#clock2")]
-      : [document.querySelector("#clock1svg"), document.querySelector("#clock2svg")];
+    this.clockarea     = this.clockmode ? [document.querySelector("#clock1"), document.querySelector("#clock2")]
+                                        : [document.querySelector("#clock1svg"), document.querySelector("#clock2svg")];
     this.pauseinfo     = document.querySelector("#pauseinfo");
     this.matchlength   = document.querySelector("#matchlength");
     this.selminpoint   = document.querySelector("#selminpoint");
@@ -68,32 +68,34 @@ class BgClockApp {
     //設定画面の[APPLY]ボタンがクリックされたとき
     this.applybtn.addEventListener("click", () => {
       this.initVariables(true);
-      this.flipcard.showMainPanel();
+      this.scoreAppObj.showHideSettingPanel(false);
       this.settingmode = false;
+      this.flipButtonDisableMode(true); //disable→enable
     });
 
     //設定画面の[Apply wo Clock]ボタンがクリックされたとき
     this.applywoclkbtn.addEventListener("click", () => {
       this.initVariables(false);
-      this.flipcard.showMainPanel();
+      this.scoreAppObj.showHideSettingPanel(false);
       this.settingmode = false;
+      this.flipButtonDisableMode(true); //disable→enable
     });
 
-    /*****************************************************
-    //設定画面の[CANCEL]ボタンがクリックされたとき(HTML側でコメントアウトされ現在は存在しない)
+    //設定画面の[CANCEL]ボタンがクリックされたとき
     this.cancelbtn.addEventListener("click", () => {
-      this.flipcard.showMainPanel();
+      this.scoreAppObj.showHideSettingPanel(false);
       this.loadSettingVars(); //transitionが終わってから書き戻す
       this.settingmode = false;
+      this.flipButtonDisableMode(true); //disable→enable
     });
-    *****************************************************/
 
     //メイン画面の[SETTINGS]ボタンがクリックされたとき
     this.settingbtn.addEventListener("click", () => {
       if (!this.pauseflg) { return; } //ポーズ時でなければ何もしない
-      this.flipcard.showSettingPanel();
+      this.scoreAppObj.showHideSettingPanel(true);
       this.saveSettingVars(); //元の値を覚えておく
       this.settingmode = true;
+      this.flipButtonDisableMode(false); //enable→disable
     });
 
     //メイン画面の[PAUSE] ボタンがクリックされたとき
@@ -148,22 +150,33 @@ class BgClockApp {
         window.removeEventListener("deviceorientation", this.gyroEventHandleFunction);
       }
     });
+
+    //スコアカード部分がクリックされたとき
+    const scorebtns = ["#score1", "#score2"];
+    for (const btn of scorebtns) {
+      document.querySelector(btn).addEventListener("click", (evt) => {
+        if (this.pauseflg) { this.scoreAppObj.incdecScore(evt, +1); }
+      });
+    }
+
+    //スコアマイナスボタンがクリックされたとき
+    const minusbtns = ["#minusbtn1", "#minusbtn2"];
+    for (const btn of minusbtns) {
+      document.querySelector(btn).addEventListener("click", (evt) => {
+        if (this.pauseflg) { this.scoreAppObj.incdecScore(evt, -1); }
+      });
+    }
   }
 
-  setSwipeEventHandler() {
-    this.score1 = document.querySelector("#score1");
-    this.score2 = document.querySelector("#score2");
-
-    //swipeイベントを登録
-    const thres = Math.max(window.innerHeight, window.innerWidth) / 20;
-    new SwipeTracker(this.score1, "tld", thres); //tapかswipeleft, swipedownを見張る。(ruはtapとみなす)
-    new SwipeTracker(this.score2, "tld", thres);
-
-    //スコアカードがスワイプあるいはタップされたとき→1枚めくる。スコアカードがめくれるのはポーズ時のみ
-    const eventlist = ["mytap", "swipeleft", "swipedown"];
-    for (const eventtype of eventlist) {
-      this.score1.addEventListener(eventtype, (evt) => { if (this.pauseflg) { this.flipcard.driveEvent(evt); }});
-      this.score2.addEventListener(eventtype, (evt) => { if (this.pauseflg) { this.flipcard.driveEvent(evt); }});
+  flipButtonDisableMode(enableflag) {
+    this.settingbtn.disabled = !enableflag;
+    this.pausebtn.disabled = !enableflag;
+    if (enableflag) {
+      this.settingbtn.classList.remove("btndisable"); //ボタンクリックを有効化
+      this.pausebtn.classList.remove("btndisable");
+    } else {
+      this.settingbtn.classList.add("btndisable"); //ボタンクリックを無効化
+      this.pausebtn.classList.add("btndisable");
     }
   }
 
@@ -265,18 +278,21 @@ class BgClockApp {
 
   //設定画面で設定した内容を反映
   initVariables(applyflg) {
-    this.soundflg = document.querySelector('[name="sound"]').checked;
-    this.vibrationflg = document.querySelector('[name="vibration"]').checked;
-    this.hourhandflg = document.querySelector('[name="hourhand"]').checked;
+    this.soundflg = document.querySelector('#sound').checked;
+    this.vibrationflg = document.querySelector('#vibration').checked;
+    this.hourhandflg = document.querySelector('#hourhand').checked;
     this.pauseflg = true; //pause状態で起動する
     this.timesettingflg = (document.querySelector('[name="timesetting"]:checked').value == "comm"); //T=comm, F=each
     this.clockplayer = 0; //手番をリセット
     this.timeoutflg = false;
     this.settingmode = false;
     this.delayInit = parseInt(this.seldelay.value);
-    this.flipcard.showMatchInfo();
+    const scorefont = document.querySelector("[name=scorefont]:checked").value;
+    this.saveScoreFont(scorefont); //localStrageに保存
+    this.scoreAppObj.fontWorker = this.scoreAppObj.makeFontWorker(scorefont); //fontWorkerを切替え
+    this.scoreAppObj.showCurrentScore();
     if (applyflg) {
-      this.flipcard.resetScore();
+      this.scoreAppObj.resetScore();
       this.setClockOption();
     }
     this.lasttimestamp = 0;
@@ -713,12 +729,14 @@ class BgClockApp {
     this.settingVars.delaytime   = document.querySelector("#delaytime").value;
     this.settingVars.sound       = document.querySelector("#sound").checked;
     this.settingVars.vibration   = document.querySelector("#vibration").checked;
+    this.settingVars.gyro        = document.querySelector("#gyro").checked;
     this.settingVars.hourhand    = document.querySelector("#hourhand").checked;
     this.settingVars.time1min    = document.querySelector("#time1min").value;
     this.settingVars.time1sec    = document.querySelector("#time1sec").value;
     this.settingVars.time2min    = document.querySelector("#time2min").value;
     this.settingVars.time2sec    = document.querySelector("#time2sec").value;
     this.settingVars.timesetting = this.getTimesettingIndex();
+    this.settingVars.scorefont   = this.getScoreCardRadio();
   }
 
   loadSettingVars() {
@@ -727,6 +745,7 @@ class BgClockApp {
     document.querySelector("#delaytime").value   = this.settingVars.delaytime;
     document.querySelector("#sound").checked     = this.settingVars.sound;
     document.querySelector("#vibration").checked = this.settingVars.vibration;
+    document.querySelector("#gyro").checked      = this.settingVars.gyro;
     document.querySelector("#hourhand").checked  = this.settingVars.hourhand;
     document.querySelector("#time1min").value    = this.settingVars.time1min;
     document.querySelector("#time1sec").value    = this.settingVars.time1sec;
@@ -734,6 +753,7 @@ class BgClockApp {
     document.querySelector("#time2sec").value    = this.settingVars.time2sec;
     document.querySelector("#allotedtime").textContent = this.get_allowtimemin();
     document.getElementsByName("timesetting")[this.settingVars.timesetting].checked = true;
+    this.setScoreCardRadio(this.settingVars.scorefont);
     document.querySelector("#timesetting").dispatchEvent(new Event("change")); //changeイベントを発火し表示を戻す
   }
 
@@ -744,6 +764,28 @@ class BgClockApp {
         return idx;
       }
     }
+  }
+
+  getScoreCardRadio() {
+    return document.querySelector("[name=scorefont]:checked").value;
+  }
+
+  setScoreCardRadio(font) {
+    document.querySelector(`[name='scorefont'][value='${font}']`).checked = true;
+  }
+
+  loadScoreFont() {
+    const fontarray = ["7seg", "rect", "dot", "flip", "odo", "hand"];
+    try {
+      const sf = localStorage.getItem("scorefont");
+      return fontarray.includes(sf) ? sf : "7seg";
+    } catch (e) {
+      return "7seg"; //localStorageが使えない場合は既定のフォント
+    }
+  }
+
+  saveScoreFont(scorefont) {
+    try { localStorage.setItem("scorefont", scorefont); } catch (e) { /* 保存できなくても動作は続ける */ }
   }
 
   //テーマカラーを変更

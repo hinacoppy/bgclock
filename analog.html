@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
   <meta name="description" content="Backgammon Clock and Score board App" />
-  <meta name="author" content="(C)hinacoppy 2018 - 2024" />
+  <meta name="author" content="(C)hinacoppy 2018 - 2026" />
   <link rel="manifest" href="manifest-analog.json" />
   <link rel="stylesheet" href="css/bgclock.css" />
   <link rel="icon" href="icon/analog/favicon.ico" />
@@ -16,15 +16,10 @@
 <body class="cool">
   <article class="article analog">
    <section id="mainwindow" class="mainwin">
-    <div id="score1" class="cardcontainer">
-     <div id="score1curr" class="card curr">0</div>
-     <div id="score1next" class="card next"></div>
-    </div>
-
-    <div id="score2" class="cardcontainer">
-     <div id="score2curr" class="card curr">0</div>
-     <div id="score2next" class="card next"></div>
-    </div>
+    <div id="score1" class="scorecontainer"></div>
+    <div id="score2" class="scorecontainer"></div>
+    <button id="minusbtn1" class="minusbtn"></button>
+    <button id="minusbtn2" class="minusbtn"></button>
 
     <div id="matchinfo">5</div>
     <div id="crawfordinfo"></div>
@@ -45,8 +40,8 @@
     <table>
      <tr>
       <td>Match length:</td>
-      <td colspan="5">
-       <select id="matchlength" name="matchlength">
+      <td>
+       <select id="matchlength">
         <option value="0">$</option>
         <option value="1">1</option>
         <option value="2">2</option>
@@ -68,7 +63,7 @@
      </tr>
      <tr>
       <td>Time setting:</td>
-      <td colspan="5">
+      <td>
        <span id="timesetting" class="segmented">
         <label><input type="radio" name="timesetting" value="comm" checked /><span class="label">Common</span></label>
         <label><input type="radio" name="timesetting" value="each" /><span class="label">Each</span></label>
@@ -77,10 +72,10 @@
      </tr>
      <tr>
       <td>Clock time:</td>
-      <td colspan="5">
+      <td>
        <span class="comm">
         <span id="allotedtime">10</span> min. = Pt x
-        <select id="selminpoint" name="selminpoint">
+        <select id="selminpoint">
          <option value="1">1</option>
          <option value="2" selected>2</option>
          <option value="2.5">2.5</option>
@@ -88,18 +83,11 @@
         min. &emsp;
        </span>
        <span class="each">
-        L:
-        <select id="time1min" name="time1min"></select>
-        :
-        <select id="time1sec" name="time1sec"></select>
-        &ensp; R:
-        <select id="time2min" name="time2min"></select>
-        :
-        <select id="time2sec" name="time2sec"></select>
-        &ensp;
+        L: <select id="time1min"></select> : <select id="time1sec"></select> &ensp;
+        R: <select id="time2min"></select> : <select id="time2sec"></select> &ensp;
        </span>
        Delay:
-       <select id="delaytime" name="delaytime">
+       <select id="delaytime">
         <option value="0">0</option>
         <option value="5">5</option>
         <option value="10">10</option>
@@ -110,28 +98,32 @@
       </td>
      </tr>
      <tr>
-      <td>Sound:&ensp;</td>
-      <td>
-       <label class="switch"><input type="checkbox" id="sound" name="sound" /> <span class="slider"></span></label>
-      </td>
-      <td class="vibration">Vibration:&ensp;</td>
-      <td class="vibration">
-       <label class="switch"><input type="checkbox" id="vibration" name="vibration" /> <span class="slider"></span></label>
-      </td>
-      <td>Gyro:&ensp;</td>
-      <td>
-       <label class="switch"><input type="checkbox" id="gyro" name="gyro" /> <span class="slider"></span></label>
-      </td>
-     </tr>
-     <tr class="analog">
-      <td>Show hour-hand:&ensp;</td>
-      <td>
-       <label class="switch"><input type="checkbox" id="hourhand" name="hourhand" checked /> <span class="slider"></span></label>
+      <td colspan="2">
+       <span>
+        Sound:
+        <label class="switch"><input type="checkbox" id="sound" /> <span class="slider"></span></label>
+        &ensp;
+       </span>
+       <span class="vibration">
+        Vibration:
+        <label class="switch"><input type="checkbox" id="vibration" /><span class="slider"></span></label>
+        &ensp;
+       </span>
+       <span>
+        Gyro:
+        <label class="switch"><input type="checkbox" id="gyro" /><span class="slider"></span></label>
+        &ensp;
+       </span>
+       <span class="analog">
+        Show hour-hand:
+        <label class="switch"><input type="checkbox" id="hourhand" checked /><span class="slider"></span></label>
+        &ensp;
+       </span>
       </td>
      </tr>
      <tr>
       <td>Theme color:</td>
-      <td colspan="5">
+      <td>
        <span id="theme" class="segmented">
         <label><input type="radio" name="theme" value="cool" checked /><span class="label">Cool</span></label>
         <label><input type="radio" name="theme" value="warm" /><span class="label">Warm</span></label>
@@ -139,11 +131,25 @@
        </span>
       </td>
      </tr>
+     <tr>
+      <td>Score font:</td>
+      <td>
+       <span id="scorefont" class="segmented">
+        <label><input type="radio" name="scorefont" value="7seg" checked /><span class="label">7Segment</span></label>
+        <label><input type="radio" name="scorefont" value="rect" /><span class="label">Rectangle</span></label>
+        <label><input type="radio" name="scorefont" value="dot" /><span class="label">DotMatrix</span></label>
+        <br>
+        <label><input type="radio" name="scorefont" value="flip" /><span class="label">FlipFont</span></label>
+        <label><input type="radio" name="scorefont" value="odo" /><span class="label">Odometer</span></label>
+        <label><input type="radio" name="scorefont" value="hand" /><span class="label">Handwritten</span></label>
+       </span>
+      </td>
+     </tr>
     </table>
 
-    <button id="applybtn" class="oparationbtn btnenable">APPLY</button>&emsp;&emsp;&emsp;
-    <button id="applywoclkbtn" class="oparationbtn btnenable">Apply wo Clock</button>&emsp;&emsp;&emsp;
-    <!--<button id="cancelbtn" class="oparationbtn btnenable">CANCEL</button>&emsp;&emsp;&emsp;-->
+    <button id="applybtn" class="oparationbtn btnenable">APPLY</button>&ensp;
+    <button id="applywoclkbtn" class="oparationbtn btnenable">Apply wo Clock</button>&ensp;
+    <button id="cancelbtn" class="oparationbtn btnenable">CANCEL</button>&ensp;
     <a href="help.html" target="bgclockhelp"><button id="helpbtn" class="oparationbtn btnenable">HELP</button></a>
    </aside>
 
@@ -154,8 +160,13 @@
   </article>
 
 <script src="/js/BgUtil_class.js"></script>
-<script src="/bgscoreapp/js/swipetracker_class.js"></script>
-<script src="/bgscoreapp/js/bgflipcard_class.js"></script>
+<script src="/bgScoreAppSvg/js/SevenSegment_class.js"></script>
+<script src="/bgScoreAppSvg/js/RectanglePolygon_class.js"></script>
+<script src="/bgScoreAppSvg/js/DotMatrix_class.js"></script>
+<script src="/bgScoreAppSvg/js/FlipFont_class.js"></script>
+<script src="/bgScoreAppSvg/js/Odometer_class.js"></script>
+<script src="/bgScoreAppSvg/js/Handwritten_class.js"></script>
+<script src="/bgScoreAppSvg/js/bgScoreAppSvg_class.js"></script>
 <script src="js/BgClockApp_class.js"></script>
 <script>
   var bgclock = new BgClockApp(false); //clockmode = digital(T)/analog(F)

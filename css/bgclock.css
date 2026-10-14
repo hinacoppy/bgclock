@@ -73,6 +73,12 @@ div{
   grid-area:score2;
   align-self:start; /* 上揃え */
 }
+#minusbtn1{
+  grid-area:score1;
+}
+#minusbtn2{
+  grid-area:score2;
+}
 #matchinfo{
   grid-area:1/1/2/3;
   align-self:start; /* 上揃え */
@@ -197,15 +203,45 @@ div{
 .timeupLose{
   color:var(--lose-info-color);
 }
+
+/* SVG score section ----------------------------------------- */
+svg{
+  /*padding:5px;*/
+  margin:5px; /* paddingだとSafari(iOS)ではpadding領域までクリップ範囲に含まれ、オドメーターのロール時に前後の数字が5px分はみ出して見えるため、marginに変更 */
+  overflow:hidden; /* 桁の増減・オドメーターのロール時、1コマ分の表示領域からはみ出す部分を隠す */
+}
+.scorecontainer{
+  width:38vmax;
+  height:96vmin;
+  width:18vmax;
+  height:28vmin;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  border-radius:6vmax;
+  border-radius:20px;
+  background-color:var(--scorecontainer);
+}
+.minusbtn{
+  width:5vmin;
+  height:5vmin;
+  justify-self:center; /* 右下 */
+  align-self:center;
+  margin:18vmin 0vmin 0vmin 30vmin;
+  border-radius:50%; /* 正円 */
+  border:none;
+  background-color:var(--minusbtn);
+  z-index:5;
+}
 /* toggle switch ----------------------------------------- */
 /* (参考) https://www.w3schools.com/howto/howto_css_switch.asp */
 .switch{
   position:relative;
   display:inline-block;
-  width:3em;
-  height:7vmin; /* #settingwindow tr に合わせる */
+  vertical-align:middle;
+  width:11vmin; /* = 1 + 5 + 4 + 1 = left + width + translateX + left */
+  height:7vmin; /* = 1 + 5 + 1 = bottom + height + bottom */
   background-color:var(--slider-bg);
-  margin-right:2em;
 }
 .switch input{
   display:none;
@@ -217,7 +253,7 @@ div{
   right:0;
   bottom:0;
   transition:.3s;
-  border-radius:5vmin; /* Rounded sliders */
+  border-radius:4vmin; /* = height / 2 */
   background-color:var(--slider-fg);
 }
 .slider:before{
@@ -228,14 +264,14 @@ div{
   left:1vmin;
   bottom:1vmin; /* height + bottom * 2 = .switch height となるよう計算 */
   transition:.3s;
-  border-radius:50%;
+  border-radius:50%; /* 正円 */
   background-color:var(--slider-btn);
 }
 input:checked + .slider{
   background-color:var(--slider-checked);
 }
 input:checked + .slider:before{
-  transform:translateX(1.2em);
+  transform:translateX(4vmin);
 }
 /* Segmented Control ----------------------------------------- */
 /* (参考) https://ginpen.com/2012/12/11/segmented-control/ */
@@ -259,68 +295,6 @@ input:checked + .slider:before{
   background-color:var(--segmented-enable-bg);
   color:var(--segmented-enable-fg);
 }
-/* Flip Card styles ------------------------------------- */
-.cardcontainer{
-  position:relative;
-  width:18vmax;
-  height:28vmin;
-}
-.card{
-  position:absolute;
-  width:18vmax;
-  height:28vmin;
-  line-height:28vmin;
-  border-radius:20px;
-  text-align:center;
-  font-size:10vmax;
-  transform-style:preserve-3d;
-  background-color:var(--score-bg-color);
-}
-.curr{
-  transform:perspective(1500px) rotateX(0deg);
-}
-.next{
-  transform:perspective(1500px) rotateX(90deg);
-  display:none;
-}
-.prev{
-  transform:perspective(1500px) rotateX(-90deg);
-}
-.flipup90{
-  transform:perspective(1500px) rotateX(-90deg);
-  transition:ease-out 0.3s transform;
-}
-.flipdn90{
-  transform:perspective(1500px) rotateX(90deg);
-  transition:ease-out 0.3s transform;
-}
-.flipdn0{
-  transform:perspective(1500px) rotateX(0deg);
-  transition:ease-out 0.3s transform;
-}
-.flipup0{
-  transform:perspective(1500px) rotateX(0deg);
-  transition:ease-out 0.3s transform;
-}
-/* Setting Window Flip settings ------------------------------------- */
-.mainwin{
-  transform-style:preserve-3d;
-  transform:perspective(1500px) rotateY(0deg);
-  transition:ease-out 0.3s transform;
-}
-.setting{
-  transform-style:preserve-3d;
-  transform:perspective(1500px) rotateY(90deg);
-  transition:ease-out 0.3s transform;
-}
-.fliphoriz90{
-  transform:perspective(1500px) rotateY(-90deg);
-  transition:ease-out 0.3s transform;
-}
-.fliphoriz0{
-  transform:perspective(1500px) rotateY(0deg);
-  transition:ease-out 0.3s transform;
-}
 /* Setting Window decorations ------------------------------------- */
 #settingwindow{
   position:absolute;
@@ -331,6 +305,7 @@ input:checked + .slider:before{
   font-size:2vmax;
   padding:5vmin 5vmax;
   display:none;
+  z-index:100;
 }
 .settingtitle{
   font-size:2.2vmax;
@@ -354,9 +329,9 @@ input:checked + .slider:before{
 #matchinfo{
   width:10vmax;
   height:15vmin;
-  line-height:15vmin;
-  text-align:center;
-  font-size:5vmax;
+  display:flex;
+  justify-content:center;
+  align-items:center;
   border-radius:20px;
   background-color:var(--match-bg-color);
 }
@@ -367,6 +342,10 @@ input:checked + .slider:before{
 }
 /* Theme Color Definition ------------------------------------- */
 .cool{
+  --svg-fill-color:      #036;
+  --scorecontainer:      #bfc;
+  --minusbtn:            #3fa;
+  --matchinfo:           #3fa;
   --body-bg-color:       #efe;
   --clock-fg-color:      #ffa;
   --clock-bg-color:      #999;
@@ -393,6 +372,10 @@ input:checked + .slider:before{
   --segmented-enable-fg: #fff;
 }
 .warm{
+  --svg-fill-color:      #603;
+  --scorecontainer:      #fbb;
+  --minusbtn:            #f33;
+  --matchinfo:           #f33;
   --body-bg-color:       #fee;
   --clock-fg-color:      #ffa;
   --clock-bg-color:      #c95;
@@ -419,6 +402,10 @@ input:checked + .slider:before{
   --segmented-enable-fg: #fff;
 }
 .mono{
+  --svg-fill-color:      #000;
+  --scorecontainer:      #ddd;
+  --minusbtn:            #aaa;
+  --matchinfo:           #aaa;
   --body-bg-color:       #eee;
   --clock-fg-color:      #fff;
   --clock-bg-color:      #ccc;
