@@ -2,7 +2,7 @@
 // (参考) https://developer.mozilla.org/ja/docs/Web/Progressive_web_apps/Offline_Service_workers
 'use strict';
 
-const cacheName = 'bgclock-v20261014';
+const cacheName = 'bgclock-v20261105';
 const ORIGIN = location.origin; //ポート番号を含むorigin(LAN内IP:ポートなどでも動作させる)
 
 const contentToCache = [
@@ -24,6 +24,7 @@ const contentToCache = [
   ORIGIN + '/bgclock/icon/analog/android-chrome-512x512.png',
   ORIGIN + '/bgclock/css/bgclock.css',
   ORIGIN + '/bgclock/js/BgClockApp_class.js',
+  ORIGIN + '/bgclock/js/BgDomUtil_class.js',
   ORIGIN + '/bgclock/sounds/decision1.mp3',
   ORIGIN + '/bgclock/sounds/decision7.mp3',
   ORIGIN + '/bgclock/sounds/warning2.mp3',

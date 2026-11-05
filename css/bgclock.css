@@ -304,8 +304,11 @@ input:checked + .slider:before{
   border:3px solid var(--setting-frame);
   font-size:2vmax;
   padding:5vmin 5vmax;
-  display:none;
+  /*display:none;*/
   z-index:100;
+}
+#settingwindow::backdrop{
+  background-color:rgba(0,0,0,0.4);
 }
 .settingtitle{
   font-size:2.2vmax;

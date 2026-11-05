@@ -35,7 +35,7 @@
    </section>
 
    <!-- 設定画面 -->
-   <aside id="settingwindow" class="setting">
+   <dialog id="settingwindow" class="setting">
     <div class="settingtitle">### Backgammon Clock and Score board App Settings ###</div>
     <table>
      <tr>
@@ -151,7 +151,7 @@
     <button id="applywoclkbtn" class="oparationbtn btnenable">Apply wo Clock</button>&ensp;
     <button id="cancelbtn" class="oparationbtn btnenable">CANCEL</button>&ensp;
     <a href="help.html" target="bgclockhelp"><button id="helpbtn" class="oparationbtn btnenable">HELP</button></a>
-   </aside>
+   </dialog>
 
    <!-- downloaded from https://soundeffect-lab.info/ -->
    <audio id="tap" src="sounds/decision1.mp3" preload="auto"></audio>
@@ -160,6 +160,7 @@
   </article>
 
 <script src="/js/BgUtil_class.js"></script>
+<script src="js/BgDomUtil_class.js"></script>
 <script src="/bgScoreAppSvg/js/SevenSegment_class.js"></script>
 <script src="/bgScoreAppSvg/js/RectanglePolygon_class.js"></script>
 <script src="/bgScoreAppSvg/js/DotMatrix_class.js"></script>
