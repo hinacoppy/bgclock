@@ -12,35 +12,17 @@ class BgClockApp {
     this.setDomNames();
     this.setEventHandler();
     this.themecolor = this.setThemeColor("cool");
-    this.initVariables(false); //設定画面の設定を変数に取り込む。クロックの初期化はsvgの設定後
+    this.initVariables(false); //設定画面の設定を変数に取り込む。
     if (!this.clockmode) {
       this.svg1 = {}; //SVGで使うための状態を保持するオブジェクト
       this.svg2 = {};
       this.svg3 = {};
-      this.init_svg_object();
+      this.init_svg_object(); //設定画面の情報を取り込んだ後(this.hourhandflgが定義されている必要あり)
     }
-    this.setClockOption(); //クロックを初期化
+    this.setClockOption(); //クロックを初期化(svgが定義されている必要あり)
     this.settingVars = {}; //設定内容を保持するオブジェクト
     this.gyroEventHandleFunction = (e) => { this.gyroEventHandler(e); } //イベントハンドラ関数を変数化
     this.showHideSwitch();
-  }
-
-  setTimeOptions() {
-    document.querySelectorAll(".each").forEach(BgDomUtil.hide); //最初は個別モードは非表示
-
-    let mopt = "";
-    for (let m = 0; m < 100; m++) {
-      const selected = (m == 10) ? " selected" : "";
-      mopt += "<option value='" + m + "'" + selected + ">" + ("00" + m).slice(-2) + "</option>";
-    }
-    document.querySelectorAll("#time1min, #time2min").forEach((el) => { el.insertAdjacentHTML("beforeend", mopt); });
-
-    let sopt = "";
-    for (let s = 0; s < 60; s++) {
-      const selected = (s == 0) ? " selected" : "";
-      sopt += "<option value='" + s + "'" + selected + ">" + ("00" + s).slice(-2) + "</option>";
-    }
-    document.querySelectorAll("#time1sec, #time2sec").forEach((el) => { el.insertAdjacentHTML("beforeend", sopt); });
   }
 
   //DOM定義
@@ -67,7 +49,7 @@ class BgClockApp {
     //設定画面の[APPLY]ボタンがクリックされたとき
     this.applybtn.addEventListener("click", () => {
       this.initVariables(true);
-      this.scoreAppObj.showHideSettingPanel(false);
+      this.showHideSettingPanel(false);
       this.settingmode = false;
       this.flipButtonDisableMode(true); //disable→enable
     });
@@ -75,34 +57,31 @@ class BgClockApp {
     //設定画面の[Apply wo Clock]ボタンがクリックされたとき
     this.applywoclkbtn.addEventListener("click", () => {
       this.initVariables(false);
-      this.scoreAppObj.showHideSettingPanel(false);
+      this.showHideSettingPanel(false);
       this.settingmode = false;
       this.flipButtonDisableMode(true); //disable→enable
     });
 
     //設定画面の[CANCEL]ボタンがクリックされたとき
     this.cancelbtn.addEventListener("click", () => {
-      this.scoreAppObj.showHideSettingPanel(false);
+      this.showHideSettingPanel(false);
       this.loadSettingVars(); //transitionが終わってから書き戻す
       this.settingmode = false;
       this.flipButtonDisableMode(true); //disable→enable
     });
 
-    //<dialog>がESCキーで閉じられたとき
-    const settingwindow = document.querySelector("#settingwindow");
-    settingwindow.addEventListener("cancel", () => {
-      //this.scoreAppObj.showHideSettingPanel(false);
-      this.loadSettingVars(); //transitionが終わってから書き戻す
-      this.settingmode = false;
-      this.flipButtonDisableMode(true); //disable→enable
+    //<dialog>をESCキーで閉じない
+    this.settingwindow.addEventListener("cancel", (e) => {
+      e.preventDefault();
     });
 
     //メイン画面の[SETTINGS]ボタンがクリックされたとき
     this.settingbtn.addEventListener("click", () => {
       if (!this.pauseflg) { return; } //ポーズ時でなければ何もしない
-      this.scoreAppObj.showHideSettingPanel(true);
+      this.showHideSettingPanel(true);
       this.saveSettingVars(); //元の値を覚えておく
       this.settingmode = true;
+      this.switchButtonEnable(this.applywoclkbtn, !this.timeoutflg)
       this.flipButtonDisableMode(false); //enable→disable
     });
 
@@ -176,15 +155,45 @@ class BgClockApp {
     }
   }
 
-  flipButtonDisableMode(enableflag) {
-    this.settingbtn.disabled = !enableflag;
-    this.pausebtn.disabled = !enableflag;
-    if (enableflag) {
-      this.settingbtn.classList.remove("btndisable"); //ボタンクリックを有効化
-      this.pausebtn.classList.remove("btndisable");
+  setTimeOptions() {
+    document.querySelectorAll(".each").forEach(BgDomUtil.hide); //最初は個別モードは非表示
+
+    let mopt = "";
+    for (let m = 0; m < 100; m++) {
+      const selected = (m == 10) ? " selected" : "";
+      mopt += "<option value='" + m + "'" + selected + ">" + ("00" + m).slice(-2) + "</option>";
+    }
+    const timeminelem = document.querySelectorAll("#time1min, #time2min");
+    timeminelem.forEach((el) => { el.insertAdjacentHTML("beforeend", mopt); });
+
+    let sopt = "";
+    for (let s = 0; s < 60; s++) {
+      const selected = (s == 0) ? " selected" : "";
+      sopt += "<option value='" + s + "'" + selected + ">" + ("00" + s).slice(-2) + "</option>";
+    }
+    const timesecelem = document.querySelectorAll("#time1sec, #time2sec");
+    timesecelem.forEach((el) => { el.insertAdjacentHTML("beforeend", sopt); });
+  }
+
+  showHideSettingPanel(showflag) {
+    if (showflag) {
+      this.settingwindow.showModal();
     } else {
-      this.settingbtn.classList.add("btndisable"); //ボタンクリックを無効化
-      this.pausebtn.classList.add("btndisable");
+      this.settingwindow.close();
+    }
+  }
+
+  flipButtonDisableMode(enableflag) {
+    this.switchButtonEnable(this.settingbtn, enableflag);
+    this.switchButtonEnable(this.pausebtn, enableflag);
+  }
+
+  switchButtonEnable(buttonelem, enableflag) {
+    buttonelem.disabled = !enableflag; //ボタンを押せる/押せない
+    if (enableflag) {
+      buttonelem.classList.remove("btndisable"); //有効化表示
+    } else {
+      buttonelem.classList.add("btndisable"); //無効化表示
     }
   }
 
@@ -320,27 +329,24 @@ class BgClockApp {
     this.dispTimer(2, time2, "pause");
     if (this.clockmode) {
       document.querySelectorAll(".delay").forEach(BgDomUtil.hide);
-      document.querySelectorAll(".clock").forEach((el) => { el.classList.remove("timeupLose"); });
     } else {
       this.dispDelay(null, this.delayInit);
-      this.pauseinfo.textContent = "PAUSE";
-      this.pauseinfo.classList.remove("timeupLose");
     }
+    this.pause_in(); //クロックが初期化されたときはPAUSE状態に
   }
 
   //PLAY -> PAUSE
   pause_in() {
     this.pauseflg = true;
-    this.settingbtn.classList.remove("btndisable"); //ボタンクリックを有効化
+    this.switchButtonEnable(this.settingbtn, true); //ボタンクリックを有効化
+    this.pauseinfo.textContent = "PAUSE";
+    this.pauseinfo.classList.remove("timeupLose");
     BgDomUtil.show(this.pauseinfo);
-    if (this.clockmode) {
-      BgDomUtil.show(this.pauseinfo);
-      this.clockarea.forEach((el) => { el.classList.remove("teban", "noteban"); el.classList.add("teban_pause"); }); //クロックを無手番に
-    } else {
-      this.pauseinfo.textContent = "PAUSE";
+    this.switchTebanClass("#clock1", "teban_pause");
+    this.switchTebanClass("#clock2", "teban_pause");
+    if (!this.clockmode) {
       this.draw_timerframe(1, this.clock[1], "pause"); //クロックをPAUSE状態で表示
       this.draw_timerframe(2, this.clock[2], "pause");
-      document.querySelectorAll("#clock1, #clock2").forEach((el) => { el.classList.remove("teban", "noteban"); el.classList.add("teban_pause"); });
     }
   }
 
@@ -348,19 +354,21 @@ class BgClockApp {
   pause_out() {
     this.pauseflg = false;
     BgDomUtil.hide(this.pauseinfo);
-    this.settingbtn.classList.add("btndisable"); //ボタンクリックを無効化
+    this.switchButtonEnable(this.settingbtn, false); //ボタンクリックを無効化
     const player = this.clockplayer;
     const oppo = BgUtil.getBdOppo(player); //手番じゃないほう
-    const clockPlayerEl = document.querySelector("#clock" + player);
-    clockPlayerEl.classList.remove("noteban", "teban_pause");
-    clockPlayerEl.classList.add("teban");
-    const clockOppoEl = document.querySelector("#clock" + oppo);
-    clockOppoEl.classList.remove("teban", "teban_pause");
-    clockOppoEl.classList.add("noteban");
+    this.switchTebanClass("#clock" + player, "teban");
+    this.switchTebanClass("#clock" + oppo, "noteban");
     if (!this.clockmode) {
       this.draw_timerframe(player, this.clock[player], "teban");
       this.draw_timerframe(oppo, this.clock[oppo], "noteban");
     }
+  }
+
+  switchTebanClass(elemid, clazz) {
+    const elem = document.querySelector(elemid)
+    elem.classList.remove("teban", "noteban", "teban_pause", "timeupLose");
+    elem.classList.add(clazz);
   }
 
   startTimer() {
@@ -461,8 +469,6 @@ class BgClockApp {
     const time = (matchlength == 0) ? maxmin : Math.ceil(matchlength * selminpoint);
     return time;
   }
-
-//以下の行はjQueryコード削除済
 
   writeAllotedtime() {
     document.querySelector("#allotedtime").textContent = this.get_allowtimemin()
